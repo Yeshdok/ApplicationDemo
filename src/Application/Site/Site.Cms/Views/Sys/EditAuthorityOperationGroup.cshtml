@@ -1,0 +1,150 @@
+
+@{
+    ViewData["Title"] = "编辑操作分组";
+}
+@using MicBeach.ViewModel.Sys.Request
+@using MicBeach.Application.Identity.Auth
+@model EditAuthorityOperationGroupViewModel
+
+<environment>
+    <link href="~/scripts/ztree/skin.css" rel="stylesheet" />
+</environment>
+<div id="page-body">
+    <div id="page-body-inner">
+        @using (Html.AjaxBeginForm("EditAuthorityOperationGroup", "Sys", new AjaxFormOptions() { OnSuccess = "SuccessCallback", OnFailure = "FailedCallback", HttpMethod = "Post" }, new { id = "default-form", @class = "pdt-10" }))
+        {
+            @Html.HiddenFor(c => c.SysNo)
+            @Html.HiddenFor(c => c.Parent.SysNo)
+            <div class="form-group">
+                <label class="col-form-label">上级分组</label>
+                <div class="d-inline-block h-38">
+                    <div id="parent_group" class="mgt-12"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">名称</label>
+                <div class="d-inline-block">
+                    @Html.TextBoxFor(a => a.Name, new { @class = "form-control w-200", autocomplete = "off" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Name, "", new { @class = "form-validate-msg" })</div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">状态</label>
+                <div class="d-inline-block w-200">
+                    @Html.EnumToSelect(a => a.Status, AuthorityOperationGroupStatus.启用, new { @class = "custom-select w-200" }, selectedValue: Model?.Status)
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-form-label">说明</label>
+                <div class="d-inline-block">
+                    @Html.TextAreaFor(a => a.Remark, new { @class = "form-control w-200 h-50", autocomplete = "off" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Remark, "", new { @class = "form-validate-msg" })</div>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts{
+    <environment>
+        <script src="~/scripts/ztree/jquery.ztree.all.js"></script>
+        <script src="~/scripts/ztree/jquery.ztree.exhide.js"></script>
+        <script src="~/scripts/treeselect.js"></script>
+    </environment>
+    <script type="text/javascript">
+        var selectGroupTree = null;
+        var nowGroupId ='@(Model?.SysNo??0)'
+        var loadingIcoUrl = '~/scripts/ztree/img/loading.gif';
+        var settings = {
+            view: {
+                nameIsHTML: true
+            },
+            callback: {
+                beforeExpand: BeforeExpand
+            }
+        };
+        $(function () {
+            InitGroupTreeData();
+            BindEnterEvent(SubmitForm);
+        });
+
+        function InitGroupTreeData() {
+            var data = {};
+            if (IsEdit()) {
+                data.excludeIds = [nowGroupId];
+
+            }
+            $.post('@Url.Action("GetAuthorityOperationGroupValue", "Sys")',data, function (res) {
+                if (!res) {
+                    return;
+                }
+                if (res.AllNodes) {
+                    var options = {
+                        containerEle: '#parent_group',
+                        treeConfig: {
+                            treeSettings: settings,
+                            nodes: [{ id: 0, name: '一级分组', value: '0', isParent: true }].concat(JSON.parse(res.AllNodes))
+                        },
+                        multiSelect: false,
+                        selectCallback: function (datas) {
+                            if (!datas || datas.length <= 0) {
+                                return;
+                            }
+                            $("#Parent_SysNo").val(datas[0].id);
+                        },
+                        selectedValue: ['@(Model.Parent?.SysNo)'],
+                        inputText:'@(Model.Parent?.Name)'
+                    };
+                    selectGroupTree = new CTreeSelect(options);
+                }
+            });
+        }
+
+        //展开加载数据
+        function BeforeExpand(treeId, treeNode)
+        {
+            if ($.trim(treeNode.id) == "0") {
+                return;
+            }
+            if(!treeNode||treeNode.loadData){
+                return true;
+            }
+            var zTree=$.fn.zTree.getZTreeObj(treeId);
+            treeNode.icon = loadingIcoUrl;
+            zTree.updateNode(treeNode);
+            var data = {};
+            data.parentId = treeNode.id;
+            if (IsEdit()) {
+                data.excludeIds = [nowRoleId];
+
+            }
+            $.post('@Url.Action("LoadChildAuthorityOperationGroups", "Sys")', data,function(res){
+                    if(!res){
+                        return;
+                    }
+                    var childNodes=JSON.parse(res.ChildNodes);
+                    zTree.addNodes(treeNode, -1, childNodes);
+                    treeNode.loadData = true;
+                    treeNode.icon = "";
+                    zTree.updateNode(treeNode);
+                    zTree.expandNode(treeNode,true);
+                });
+                return false;
+        }
+
+        function IsEdit() {
+            return nowGroupId != '' && nowGroupId != '0';
+
+        }
+        //提交
+        function SubmitForm() {
+            $("#default-form").submit();
+
+        }
+        function ArtEvent() {
+            SubmitForm();
+            return false;
+        }
+    </script>
+}
+

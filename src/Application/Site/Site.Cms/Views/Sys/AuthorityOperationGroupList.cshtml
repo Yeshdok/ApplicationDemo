@@ -1,0 +1,512 @@
+@{
+    ViewBag.Title = "授权操作组管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<environment>
+    <link href="~/style/css/table.css" rel="stylesheet" />
+    <link href="~/scripts/ztree/skin.css" rel="stylesheet" />
+    <link href="~/style/css/jquery.splitter.css" rel="stylesheet" />
+</environment>
+@using MicBeach.Application.Identity.Auth
+@using MicBeach.Util.Extension;
+@using MicBeach.Util.Serialize;
+@{
+    var statusValues = AuthorityOperationStatus.启用.GetType().GetEnumValueAndNames();
+}
+<div id="page-body">
+    <div id="page-body-inner">
+        <div class="split-vertical-container" data-position="15%" data-splitlimit="50,50">
+            <div class="split-vertical-left">
+                <div class="content-panel">
+                    <div class="content-panel-head default h-50 bd-lw-0 bd-tw-0 txt-center lh-50">
+                        <button type="button" class="btn btn-sm btn-primary" id="btn_addlevelone"><i class="icon-plus"></i> 添加分组</button>
+                        <button type="button" class="btn btn-sm btn-danger" id="btn_deleteselect"><i class="icon-trash"></i> 删除选中</button>
+                    </div>
+                    <div class="content-panel-body">
+                        <div class="content-panel-body-inner">
+                            <ul id="AuthorityOperationGroup_tree" class="ztree"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="split-vertical-right">
+                <div class="content-panel hide" id="operationgroup_detail">
+                    <div class="content-panel-head">
+                        <table cellpadding="0" cellspacing="0" class="detail-table">
+                            <tr>
+                                <td class="detail-td-tit">名称</td>
+                                <td class="detail-td-content" id="content-for-Name"></td>
+                            </tr>
+                            <tr>
+                                <td class="detail-td-tit">状态</td>
+                                <td class="detail-td-content" id="content-for-Status"></td>
+                            </tr>
+                            <tr>
+                                <td class="detail-td-tit">备注</td>
+                                <td class="detail-td-content" id="content-for-Remark"></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td class="detail-td-content"><button type="button" class="btn btn-primary" id="btn_edit"><i class="icon-edit"></i> 编辑</button></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="content-panel-body">
+                        <div class="content-panel-body-inner content-panel">
+                            <ul class="nav nav-tabs content-panel-head" id="myTab" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active bd-lw-0" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">授权操作</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content content-panel-body" id="myTabContent">
+                                <div class="tab-pane show active content-panel" id="home" role="tabpanel">
+                                    <div class="content-panel-head">
+                                        <div class="row pd-10 mg-0">
+                                            <div class="lis_search pd-0">
+                                                <div class="form-group mg-0">
+                                                    <input type="text" class="form-control w-200" id="search_authname" placeholder="名称/控制器/方法">
+                                                    <button type="button" class="btn btn-info" onclick="LoadActions()"><i class="icon-search"></i>搜索</button>
+                                                    <button class="btn btn-success" type="button" id="btn_addaction"><i class="icon-plus"></i> 添加权限</button>
+                                                    <button class="btn btn-danger" type="button" id="btn_delselectaction"><i class="icon-trash"></i> 删除选中</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="content-panel-body">
+                                        <table id="auth_table" class="datagrid-table wp-100" cellspacing="0" cellpadding="0"></table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts
+    {
+    <environment>
+        <script src="~/scripts/table/jquery.dataTables.min.js"></script>
+        <script src="~/scripts/table/dataTables.fixedColumns.min.js"></script>
+        <script src="~/scripts/jq/jquery.splitter.js"></script>
+        <script src="~/scripts/ztree/jquery.ztree.all.js"></script>
+        <script src="~/scripts/ztree/jquery.ztree.exhide.js"></script>
+    </environment>
+    <script type="text/javascript">
+        var imgPath = "";
+        var changeSortUrl = '@Url.Action("ChangeAuthorityOperationGroupSort", "Sys")';
+        var deleteUrl = '@Url.Action("DeleteAuthorityOperationGroup", "Sys")';
+        var loadingIcoUrl = '/Content/Scripts/ztree/img/loading.gif';
+        var editAuthorityOperationGroup = null;
+        var editActionUrl='@Html.Raw(Url.Action("EditAuthorityOperation", "Sys",new { sysNo="_id",groupSysNo="_gsysno"}))';
+        var operationCloseStatus=@((int)AuthorityOperationStatus.关闭);
+        var operationOpenStatus=@((int)AuthorityOperationStatus.启用);
+        var operationAuthUrl='@Url.Action("AuthorityOperationBindAuthorityList","Sys",new { id="_id"})';
+        var operationStatusDic=new Object();
+        var seetings = {
+            view: {
+                nameIsHTML: true,
+            },
+            callback: {
+                onClick: AllAuthorityOperationGroupNodeClick,
+                beforeDrag: beforeDrag,
+                beforeDrop: beforeDrop,
+                beforeExpand: BeforeExpand,
+            },
+            check: {
+                enable: true,
+                chkboxType: { "Y": "", "N": "" }
+            },
+            edit: {
+                enable: true,
+                showRemoveBtn: false,
+                showRenameBtn: false,
+                drag: {
+                    isMove: true,
+                    inner: false,
+                    prev: true,
+                    next: true
+                }
+            }
+        };
+
+        var allNodes = [];
+        var allAuthorityOperationGroups = {};
+        var selectedNode = null;
+        $(function () {
+            InitData();
+            operationStatusDic=JSON.parse('@Html.Raw(JsonSerialize.ObjectToJson(statusValues))');
+            //权限操作表格
+            InitDataTable({
+                TableEle:'#auth_table',
+                "columnDefs": [
+                    {
+                        "title": '<div class="checkbox-style cbx_all"></div>', "targets": 0,"data":function ( row, type, val, meta ) {
+                            return '<div class="checkbox-style cbx_val auth_cbx_val" data-val="' + row.SysNo + '"></div>';
+				        },width:'20px',className:'txt-center' },
+    					{ "title": "名称", "targets": 1,"data":'Name',width:'200px' },
+    					{ "title": "控制器", "targets": 2,"data":'ControllerCode',width:'150px' },
+                        { "title": "方法", "targets": 3,"data":'ActionCode',width:'150px' },
+    					{ "title": "状态", "targets": 4,"data":'Status',width:'50px',className:"txt-center",render:function(data, type, row, meta){
+    					    return operationStatusDic[data];
+    					}
+    					},
+    					{ "title": "说明", "targets": 5,"data":'Remark' },
+    					{ "title": "操作", "targets": 6,"data":function(row,type,val,meta){
+    					    var menuItems=new Array();
+                            menuItems.push('<li><a href="javascript:void(0)" class="btn_editaction dropdown-item" sysno="_sysNo" actionname="_name"><i class="icon-edit"></i> 编辑</a></li>'.replace('_sysNo',row.SysNo).replace('_name',row.Name));
+    					    if(row.Status==@((int)AuthorityOperationStatus.启用)){
+                                menuItems.push('<li><a href="javascript:void(0)" class="btn_status_close dropdown-item" sysno="_sysNo" actionname="_name"><i class="icon-eye-close"></i> 关闭</a></li>'.replace('_sysNo',row.SysNo).replace('_name',row.Name));
+    					}else{
+                                menuItems.push('<li><a href="javascript:void(0)" class="btn_status_open dropdown-item" sysno="_sysNo" actionname="_name"><i class="icon-eye-open"></i> 开启</a></li>'.replace('_sysNo',row.SysNo).replace('_name',row.Name));
+        }
+                            menuItems.push('<li><a href="javascript:void(0)" class="btn_action_auth dropdown-item" sysno="_sysNo" actionname="_name"><i class="icon-check"></i> 授权</a></li>'.replace('_sysNo',row.SysNo).replace('_name',row.Name));
+                            menuItems.push('<li><a href="javascript:void(0)" class="btn_auth_delete dropdown-item" sysno="_sysNo" actionname="_name"><i class="icon-trash"></i> 删除</a></li>'.replace('_sysNo',row.SysNo).replace('_name',row.Name));
+        return '<div class="btn-group"><button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理 <span class="caret"></span></button><ul class="dropdown-menu list-dropdown-menu" style="width:62px">'+menuItems.join('')+'</ul></div>';
+        },width:'62px',className:'txt-center' },
+        ]
+        });
+
+        //添加一级
+        $("#btn_addlevelone").click(function () {
+            OpenDialogPage({
+                title: '添加操作分组',
+                url: '@Url.Action("EditAuthorityOperationGroup", "Sys")',
+                width: '520px',
+                height:'400px'
+             });
+        });
+
+            //编辑操作分组
+            $("#btn_edit").click(function () {
+                if (!editAuthorityOperationGroup) {
+                    return;
+                }
+                var editUrl = '@Url.Action("EditAuthorityOperationGroup", "Sys",new { sysNo="_id"})'.replace('_id', editAuthorityOperationGroup.SysNo);
+                OpenDialogPage({
+                    title: '编辑操作分组',
+                    url: editUrl,
+                    width: '520px',
+                    height: '400px'
+                });
+            });
+
+        //上移
+        $("#btn_sortup").click(function () {
+            if (!selectedNode) {
+                return;
+            }
+            var prevNode = selectedNode.getPreNode();
+            if (!prevNode) {
+                return;
+            }
+            MoveNode(selectedNode, prevNode, 'prev');
+        });
+        //下移
+        $("#btn_sortdown").click(function () {
+            if (!selectedNode) {
+                return;
+            }
+            var nextNode = selectedNode.getNextNode();
+            if (!nextNode) {
+                return;
+            }
+            MoveNode(selectedNode, nextNode, 'next');
+        });
+
+        //删除
+        $("#btn_deleteselect").click(function () {
+            var checkNodes = $.fn.zTree.getZTreeObj("AuthorityOperationGroup_tree").getCheckedNodes(true);
+            var sysNoArray = new Array();
+            for (var i = 0; i < checkNodes.length; i++) {
+                sysNoArray.push(checkNodes[i].id);
+            }
+            DeleteAuthorityOperationGroup(sysNoArray);
+        });
+
+        //添加操作方法
+        $("#btn_addaction").click(function(){
+            ShowEditAction('添加操作',0);
+        });
+        //编辑操作
+        $("body").on("click",".btn_editaction",function(){
+            var sysNo=$.trim($(this).attr('sysno'));
+            var authName=$.trim($(this).attr('actionname'));
+            if(sysNo==''){
+                return;
+            }
+            var tit=authName==''?'编辑操作':'编辑操作【'+authName+'】';
+            ShowEditAction(tit,sysNo)
+        });
+        //关闭操作
+        $("body").on('click','.btn_status_close',function(){
+            var sysNo=$.trim($(this).attr('sysno'));
+            ModifyOperationStatus(sysNo,operationCloseStatus)
+        });
+        //开启操作
+        $("body").on('click','.btn_status_open',function(){
+            var sysNo=$.trim($(this).attr('sysno'));
+            ModifyOperationStatus(sysNo,operationOpenStatus)
+        });
+        //删除操作
+        $("body").on('click','.btn_auth_delete',function(){
+            DeleteAuthorityOperation($(this).attr('sysno'));
+        });
+        //删除选中操作
+        $('body').on('click','#btn_delselectaction',function(){
+            var checkedValues = GetDataTableCheckedValues('#auth_table');
+            var checkedValueString = checkedValues.join(",");
+            DeleteAuthorityOperation(checkedValueString);
+        });
+        //查看操作授权
+        $("body").on('click',".btn_action_auth",function(){
+            var sysNo=$.trim($(this).attr('sysno'));
+            var authName=$.trim($(this).attr('actionname'));
+            ShowActionBindAuthority(authName,sysNo);
+        });
+        });
+
+        //移动节点
+        function MoveNode(treeNode, targetNode, moveType) {
+            if (treeNode.tId == targetNode.tId) {
+                return false;
+            }
+            var sortIndex = 0;
+            if (moveType == "inner") {
+                if (targetNode.tId != treeNode.parentTId) {
+                    return false;
+                }
+                sortIndex = 1;
+            } else {
+                if (treeNode.parentTId != targetNode.parentTId) {
+                    return false;
+                }
+                var targetId = targetNode.id;
+                var targetArea = allAuthorityOperationGroups[targetId];
+                if (!targetArea) {
+                    return false;
+                }
+                sortIndex = moveType == "prev" ? targetArea.Sort : targetArea.Sort + 1;
+            }
+            var nowId = treeNode.id;
+            $.post(changeSortUrl, { sysNo: nowId, sort: sortIndex }, function (res) {
+                if (res.Success) {
+                }
+            })
+            $.fn.zTree.getZTreeObj("AuthorityOperationGroup_tree").moveNode(targetNode, treeNode, moveType, true);
+            return false;
+        }
+
+        //拖拽之前事件
+        function beforeDrag(treeId, treeNodes) {
+            for (var i = 0, l = treeNodes.length; i < l; i++) {
+                if (treeNodes[i].drag === false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        //拖拽事件
+        function beforeDrop(treeId, treeNodes, targetNode, moveType) {
+            if (!treeNodes || !targetNode || treeNodes.length <= 0) {
+                return false;
+            }
+            var firstNode = treeNodes[0];
+            return MoveNode(firstNode, targetNode, moveType);
+        }
+
+        //提交表单
+        function SubmitForm() {
+            $("#AuthorityOperationGroupform").submit();
+        }
+
+        //左侧授权操作组节点选择
+        function AllAuthorityOperationGroupNodeClick(event, treeId, treeNode) {
+            var nowAuthorityOperationGroup = allAuthorityOperationGroups[treeNode.id];
+            editAuthorityOperationGroup = nowAuthorityOperationGroup;
+            if (!editAuthorityOperationGroup) {
+                return;
+
+            }
+            $('#content-for-Name').text(nowAuthorityOperationGroup.Name);
+            $('#content-for-Status').text(nowAuthorityOperationGroup.StatusString);
+            $('#content-for-Remark').text(nowAuthorityOperationGroup.Remark);
+            $("#operationgroup_detail").removeClass('hide');
+            LoadActions();
+            $(window).resize();
+        }
+
+        //添加成功
+        function EditSuccess(res) {
+            ResultMsg(res);
+            if (res.Success) {
+                if (isAdd) {
+                    ResetForm();
+                }
+                InitData(res);
+            }
+        }
+
+        //初始化数据
+        function InitData(res) {
+            $.post('@Url.Action("GetAuthorityOperationGroupValue", "Sys")', function (res) {
+                if (!res) {
+                    return;
+                }
+                if (res.AllGroups) {
+                    allAuthorityOperationGroups = JSON.parse(res.AllGroups);
+                }
+                if (res.AllNodes) {
+                    allNodes = JSON.parse(res.AllNodes);
+                    InitAllAuthorityOperationGroupTree();
+                }
+            });
+        }
+
+        //初始化所有授权操作组树控件
+        function InitAllAuthorityOperationGroupTree() {
+            $.fn.zTree.init($("#AuthorityOperationGroup_tree"), seetings, allNodes);
+        }
+
+        //删除操作分组
+        function DeleteAuthorityOperationGroup(sysNos) {
+            if (!sysNos || sysNos.length<=0) {
+                ErrorMsg("没有选择要删除的授权操作组信息");
+                return;
+            }
+            ConfirmMsg('将同时删除子集及分组操作,确认删除吗?', function (res) {
+                $.post(deleteUrl, { sysNos: sysNos }, function (res) {
+                    ResultMsg(res);
+                    if (res.Success) {
+                        var allAuthorityOperationGroupTree = $.fn.zTree.getZTreeObj("AuthorityOperationGroup_tree");
+                        var checkNodes = allAuthorityOperationGroupTree.getCheckedNodes(true);
+                        for (var n in checkNodes) {
+                            var nowNode = checkNodes[n];
+                            allAuthorityOperationGroupTree.removeNode(nowNode);
+                            if (editAuthorityOperationGroup && editAuthorityOperationGroup.SysNo == nowNode.id) {
+                                ResetDetailPage();
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        //展开加载数据
+        function BeforeExpand(treeId, treeNode){
+            if(!treeNode||treeNode.loadData){
+                return true;
+            }
+            var zTree=$.fn.zTree.getZTreeObj(treeId);
+            treeNode.icon = loadingIcoUrl;
+            zTree.updateNode(treeNode);
+            $.post('@Url.Action("LoadChildAuthorityOperationGroups","Sys")',{parentId:treeNode.id},function(res){
+                if(!res){
+                    return;
+                }
+                var childNodes=JSON.parse(res.ChildNodes);
+                zTree.addNodes(treeNode, -1, childNodes);
+                treeNode.loadData = true;
+                treeNode.icon = "";
+                zTree.updateNode(treeNode);
+                zTree.expandNode(treeNode,true);
+                var childAuthorityOperationGroups=JSON.parse(res.AuthorityOperationGroupData);
+                for(var c in childAuthorityOperationGroups){
+                    allAuthorityOperationGroups[c]=childAuthorityOperationGroups[c];
+                }
+            });
+            return false;
+        }
+
+        //加载操作数据
+        function LoadActions(){
+            if(!editAuthorityOperationGroup){
+                return;
+            }
+            var loadUrl='@Url.Action("GetActions", "Sys")';
+            $.post(loadUrl,{groupSysNo:editAuthorityOperationGroup.SysNo,key:$.trim($("#search_authname").val())},function(res){
+                ReplaceDataTableData("#auth_table", JSON.parse(res.Datas));
+                InitDataTableChecked("#auth_table");
+                $(window).resize();
+            });
+        }
+
+        //显示编辑操作
+        function ShowEditAction(tit,actionSysNo){
+            if(!editAuthorityOperationGroup){
+                ErrorMsg("请先选择操作分组");
+                return;
+            }
+            OpenDialogPage({
+                url: editActionUrl.replace('_id',actionSysNo).replace('_gsysno',editAuthorityOperationGroup.SysNo),
+                width: "600px",
+                height: "400px",
+                title: tit
+            });
+        }
+
+        //修改操作状态
+        function ModifyOperationStatus(sysNos,status){
+            var tit=status==operationCloseStatus?'确认关闭操作吗?':'确认开启操作吗?';
+            ConfirmMsg(tit, function () {
+                sysNos=$.trim(sysNos);
+                if(sysNos==""){
+                    ErrorMsg('请指定要操作的数据');
+                    return;
+                }
+                $.post('@Url.Action("ModifyAuthorityOperationStatus", "Sys")',{sysNos:sysNos,status:status},function(res){
+                    ResultMsg(res);
+                    if(res&&res.Success){
+                        LoadActions();
+                    }
+                });
+            });
+        }
+
+        //删除操作
+        function DeleteAuthorityOperation(sysNos){
+            sysNos=$.trim(sysNos);
+            if(sysNos==""){
+                ErrorMsg('没有指定要删除的操作信息');
+                return;
+            }
+            ConfirmMsg('删除后将不能恢复,确认删除吗?', function () {
+                $.post('@Url.Action("DeleteAuthorityOperation", "Sys")',{sysNos:sysNos},function(res){
+                    ResultMsg(res);
+                    if(res&&res.Success){
+                        LoadActions();
+                    }
+                });
+            });
+        }
+
+        //显示操作授权
+        function ShowActionBindAuthority(actionName,sysNo){
+            var bindUrl=operationAuthUrl.replace('_id',sysNo);
+            var tit='【'+actionName+'】操作授权'
+            OpenDialogPage({
+                url: bindUrl,
+                width: "600px",
+                height: "400px",
+                title: tit,
+                ok: false,
+                cancel: null
+            });
+        }
+
+        //重置详情数据
+        function ResetDetailPage() {
+            ResetData();
+            $("#operationgroup_detail").addClass("hide");
+        }
+
+        //重置数据
+        function ResetData() {
+            ClearDataTableData("#auth_table");
+        }
+
+    </script>
+}
+

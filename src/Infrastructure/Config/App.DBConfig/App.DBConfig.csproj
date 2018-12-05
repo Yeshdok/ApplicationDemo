@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="1.50.5" />
+    <PackageReference Include="MicBeach.Data" Version="1.0.4" />
+    <PackageReference Include="MicBeach.Data.SqlServer" Version="1.0.4" />
+    <PackageReference Include="MicBeach.Develop" Version="1.0.7" />
+    <PackageReference Include="MicBeach.Serialize.Json.JsonNet" Version="1.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Model\Entity\MicBeach.Entity.Sys\MicBeach.Entity.Sys.csproj" />
+    <ProjectReference Include="..\..\Model\Query\MicBeach.Query.Sys\MicBeach.Query.Sys.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="7.0.1" />
+    <PackageReference Include="MicBeach.DataValidation.Config" Version="1.0.2" />
+    <PackageReference Include="MicBeach.Mvc.CustomModelDisplayName" Version="1.0.1" />
+    <PackageReference Include="MicBeach.Util" Version="1.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Model\Entity\MicBeach.Entity.Sys\MicBeach.Entity.Sys.csproj" />
+    <ProjectReference Include="..\..\Model\Query\MicBeach.Query.Sys\MicBeach.Query.Sys.csproj" />
+    <ProjectReference Include="..\..\..\Logic\Business\Domain\MicBeach.Domain.Sys\MicBeach.Domain.Sys.csproj" />
+    <ProjectReference Include="..\..\Model\Presentation\MicBeach.ViewModel.Sys\MicBeach.ViewModel.Sys.csproj" />
+    <ProjectReference Include="..\..\Model\DTO\MicBeach.DTO.Sys\MicBeach.DTO.Sys.csproj" />
+  </ItemGroup>
+
+</Project>

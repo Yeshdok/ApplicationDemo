@@ -1,0 +1,299 @@
+@{
+    ViewBag.Title = "权限分组管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<environment>
+    <link href="~/style/css/table.css" rel="stylesheet" />
+    <link href="~/scripts/ztree/skin.css" rel="stylesheet" />
+    <link href="~/style/css/jquery.splitter.css" rel="stylesheet" />
+</environment>
+@using MicBeach.Util.Extension;
+@using MicBeach.Util.Serialize;
+@using MicBeach.Application.Identity.Auth;
+@{
+    var statusValues = AuthorityStatus.启用.GetType().GetEnumValueAndNames();
+}
+<div id="page-body">
+    <div id="page-body-inner">
+        <div class="split-vertical-container" data-position="50%" data-splitlimit="50,50">
+            <div class="split-vertical-left">
+                <ul id="all_tree" class="ztree"></ul>
+            </div>
+            <div class="split-vertical-right">
+                <div class="content-panel">
+                    <ul class="nav nav-tabs bd-tw-0 content-panel-head" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active bd-lw-0" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">权限数据</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">已选权限</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content content-panel-body" id="myTabContent">
+                        <div class="tab-pane show active content-panel" id="home" role="tabpanel">
+                            <div class="content-panel-head lis_search pd-10">
+                                <div class="form-group mg-0">
+                                    <input type="text" class="form-control w-200" id="search_authname" placeholder="权限名称/编码">
+                                    <button class="btn btn-info" type="button" id="searchbusiness_btn" onclick="LoadAuthoritys()"><i class="icon-search"></i> 搜索</button>
+                                </div>
+                            </div>
+                            <div class="content-panel-body"><table id="auth_table" class="datagrid-table wp-100" cellspacing="0" cellpadding="0"></table></div>
+                        </div>
+                        <div class="tab-pane content-panel" id="profile" role="tabpanel">
+                            <div class="content-panel-head pd-10">
+                                <button class="btn btn-sm btn-danger" id="btn_cancelallselected"><i class="icon-remove"></i> 取消全部</button>
+                            </div>
+                            <div class="content-panel-body">
+                                <table id="selected_auth_table" class="datagrid-table wp-100" cellspacing="0" cellpadding="0"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <environment>
+        <script src="~/scripts/table/jquery.dataTables.min.js"></script>
+        <script src="~/scripts/table/dataTables.fixedColumns.min.js"></script>
+        <script src="~/scripts/jq/jquery.splitter.js"></script>
+        <script src="~/scripts/ztree/jquery.ztree.all.js"></script>
+        <script src="~/scripts/ztree/jquery.ztree.exhide.js"></script>
+    </environment>
+    <script type="text/javascript">
+        var imgPath = "";
+        var loadingIcoUrl = '/Content/Scripts/ztree/img/loading.gif';
+        var selectGroupId = null;
+        var selectedAuthObj=new Object();
+        var allDatas=new Object();
+        var authStatusDic=new Object();
+        var selectObjects = new Array();
+        var seetings = {
+            view: {
+                nameIsHTML: true,
+                //showIcon:false
+            },
+            callback: {
+                onClick: AllAuthorityGroupNodeClick,
+                beforeExpand: BeforeExpand,
+            },
+            check: {
+                enable: false,
+                chkboxType: { "Y": "", "N": "" }
+            },
+            edit: {
+                enable: true,
+                showRemoveBtn: false,
+                showRenameBtn: false,
+            }
+        };
+        var allNodes = [];
+        var selectedNode = null;
+        $(function () {
+            authStatusDic=JSON.parse('@Html.Raw(JsonSerialize.ObjectToJson(statusValues))');
+            var columnConfigs=new Array();
+            var selectColumnConfigs=new Array();
+            for (var i = 0; i < 3; i++) {
+                var tit = '';
+                var data = '';
+                var width = '';
+                var className = '';
+                var render;
+                switch (i) {
+                    case 0:
+                        tit = "编码";
+                        data = "Code";
+                        width = "100px";
+                        break;
+                    case 1:
+                        tit = "名称";
+                        data = "Name";
+                        break;
+                    case 2:
+                        tit = "状态";
+                        data = "Status";
+                        width = "50px";
+                        render=function(data, type, row, meta){
+                            return authStatusDic[row.Status];
+                        }
+                        className="txt-center";
+                        break;
+                }
+                var configItem = { "title": tit, "targets": i, "data": data, "width": width, "className": className, 'render': render };
+                columnConfigs.push(configItem);
+                selectColumnConfigs.push(configItem)
+            }
+            columnConfigs.push({
+                "title": "操作", "targets": 3, "data": function (row, type, val, meta) {
+                    return '<button type="button" data-value="'+row.Code+'" class="btn btn-sm btn-success btn_select_auth">选择</button>';
+                }, width: '40px', className: 'txt-center'
+            });
+            selectColumnConfigs.push({
+                "title": "操作", "targets": 3, "data": function (row, type, val, meta) {
+                    return '<button type="button" data-value="' + row.Code + '" class="btn btn-sm btn-danger btn_select_cancel">取消</button>';
+                }, width: '40px', className: 'txt-center'
+            });
+            InitDataTable({
+                TableEle: '#auth_table',
+                "columnDefs": columnConfigs
+            });
+            InitDataTable({
+                TableEle: '#selected_auth_table',
+                "columnDefs": selectColumnConfigs
+            });
+
+            InitAllAuthorityGroupTree();
+            //选择
+            $("body").on('click', '.btn_select_auth', function () {
+                SelectAuthority($(this));
+            });
+            //取消选择
+            $("body").on('click', '.btn_select_cancel', function () {
+                CancelSelectAuthority($(this).attr('data-value'));
+            });
+            //取消全部
+            $("#btn_cancelallselected").click(function () {
+                for (var d in selectedAuthObj) {
+                    CancelSelectAuthority(d);
+                }
+            });
+        });
+
+        //选择权限
+        function SelectAuthority(btn){
+            if(!btn){
+                return;
+            }
+            var sysNo=$.trim(btn.attr('data-value'));
+            if(sysNo==''){
+                return;
+            }
+            var nowSelectItem=selectedAuthObj[sysNo];
+            btn.removeClass('btn_select_auth').removeClass('btn-success').addClass('btn_select_cancel').addClass('btn-danger').html('取消');
+            if(nowSelectItem){
+                return;
+            }
+            var nowAuthData=allDatas[sysNo];
+            if(!nowAuthData){
+                return;
+            }
+            AddDataTableData("#selected_auth_table",[nowAuthData]);
+            selectedAuthObj[sysNo]=true;
+            selectObjects.push(nowAuthData);
+        }
+
+        //取消选择
+        function CancelSelectAuthority(sysNo){
+            if(!sysNo){
+                return;
+            }
+            var selectItem=selectedAuthObj[sysNo];
+            if(!selectItem){
+                return;
+            }
+            $('.btn_select_cancel[data-value="' + sysNo + '"]').removeClass('btn_select_cancel').removeClass('btn-danger').addClass('btn_select_auth').addClass('btn-success').html('选择');
+            selectedAuthObj[sysNo]=false;
+            for (var d in selectObjects) {
+                if (selectObjects[d].Code == sysNo) {
+                    selectObjects.splice(d, 1);
+                    break;
+                }
+            }
+            ReplaceDataTableData("#selected_auth_table",selectObjects);
+        }
+
+        //左侧权限分组节点选择
+        function AllAuthorityGroupNodeClick(event, treeId, treeNode) {
+            selectGroupId=treeNode.id;
+            selectedNode = treeNode;
+            $.fn.zTree.getZTreeObj("all_tree").selectNode(treeNode, false);
+            LoadAuthoritys();
+        }
+
+        //初始化所有权限分组树控件
+        function InitAllAuthorityGroupTree() {
+            $.post('@Url.Action("GetAuthorityGroupValue", "Sys")', function (res) {
+                    if (!res) {
+                        return;
+                    }
+                    if (res.AllNodes) {
+                        allNodes = JSON.parse(res.AllNodes);
+                        $.fn.zTree.init($("#all_tree"), seetings, allNodes);
+                    }
+                });
+        }
+
+        //展开加载数据
+        function BeforeExpand(treeId, treeNode){
+            if(!treeNode||treeNode.loadData){
+                return true;
+            }
+            var zTree=$.fn.zTree.getZTreeObj(treeId);
+            treeNode.icon = loadingIcoUrl;
+            zTree.updateNode(treeNode);
+            $.post('@Url.Action("LoadChildAuthorityGroups","Sys")',{parentId:treeNode.id},function(res){
+                if(!res){
+                    return;
+                }
+                var childNodes=JSON.parse(res.ChildNodes);
+                zTree.addNodes(treeNode, -1, childNodes);
+                treeNode.loadData = true;
+                treeNode.icon = "";
+                zTree.updateNode(treeNode);
+                zTree.expandNode(treeNode,true);
+                var childAuthorityGroups=JSON.parse(res.AuthorityGroupData);
+            });
+            return false;
+        }
+
+        //加载权限数据
+        function LoadAuthoritys(){
+            if(!selectGroupId){
+                return;
+            }
+            $("#tabe_page_list").html("");
+            var loadUrl='@Url.Action("AuthorityMultiSelectSearch", "Sys")';
+            $.post(loadUrl,{groupSysNo:selectGroupId,key:$.trim($("#search_authname").val())},function(res){
+                var operatinDatas=JSON.parse(res.Datas);
+                ReplaceDataTableData("#auth_table",operatinDatas);
+                for (var p in operatinDatas) {
+                    var data = operatinDatas[p];
+                    allDatas[data.Code] = data;
+                }
+                $(window).resize();
+                InitSelectData();
+            });
+        }
+
+        //初始化已选择的数据
+        function InitSelectData(){
+            if(!selectedAuthObj){
+                return;
+            }
+            for(var sysNo in selectedAuthObj){
+                if(selectedAuthObj[sysNo]){
+                    $('.btn_select_auth[data-value="'+sysNo+'"]').each(function(i,e){
+                        SelectAuthority($(e));
+                    });
+                }
+            }
+        }
+
+        function ArtEvent() {
+            return ConfirmSelect();
+
+        }
+
+        //确认选择
+        function ConfirmSelect(){
+            DialogOpener().AuthorityMultiSelectCallback(selectObjects);
+            return true;
+        }
+
+    </script>
+}
+

@@ -1,0 +1,195 @@
+@{
+    ViewBag.Title = "权限操作";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using MicBeach.Application.Identity.Auth;
+@using MicBeach.Util.Extension;
+@using MicBeach.Util.Serialize;
+@{
+    var statusValues = AuthorityOperationStatus.启用.GetType().GetEnumValueAndNames();
+}
+<environment>
+    <link href="~/style/css/table.css" rel="stylesheet" />
+</environment>
+<div id="page-body" class="content-panel">
+    <div class="content-panel-head">
+        <div class="row pd-10 mg-0">
+            <div class="column lis_search pd-0">
+                <input type="text" class="form-control w-200" id="search_authname" placeholder="操作名称/编码">
+                <button class="btn btn-info fc_3" type="button" id="searchbusiness_btn" onclick="SearchOperation()"><i class="icon-search"></i></button>
+                <button class="btn btn-primary" id="btn_addoperation"><i class="icon-plus"></i> 添加操作</button>
+                <button class="btn btn-danger" id="deleteselect_btn"><i class="icon-trash"></i> 删除选中</button>
+            </div>
+        </div>
+    </div>
+    <div class="content-panel-body">
+        <table class="datagrid-table wp-100" id="operation_table" cellpadding="0" cellspacing="0"></table>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <environment>
+        <script src="~/scripts/table/jquery.dataTables.min.js"></script>
+        <script src="~/scripts/table/dataTables.fixedColumns.min.js"></script>
+    </environment>
+    <script type="text/javascript">
+            var nowOperationDatas = new Object();
+            var operationStatusDic = new Object();
+            $(function () {
+                //操作表格
+                InitDataTable({
+                    TableEle: '#operation_table',
+                    "columnDefs": [
+                            {
+                                "title": '<div class="checkbox-style cbx_all"></div>', "targets": 0, "data": function (row, type, val, meta) {
+                                    return '<div class="checkbox-style cbx_val auth_cbx_val" data-val="' + row.SysNo + '"></div>';
+                                }, width: '20px', className: 'txt-center'
+                            },
+                            { "title": "名称", "targets": 1, "data": 'Name' },
+                            {
+                                "title": "方法编码", "targets": 2, render: function (data, type, row, meta) {
+                                    return row.ControllerCode + '/' + row.ActionCode;
+                                }
+                            },
+                            {
+                                "title": "状态", "targets": 3, "data": 'Status', width: '50px', className: 'txt-center', render: function (data, type, row, meta) {
+                                    return operationStatusDic[data];
+                                }
+                            },
+                            {
+                                "title": "操作", "targets": 4, "data": function (row, type, val, meta) {
+                                    return '<button type="button" class="btn btn-sm btn-danger btn_delete_operation w-50" sysno="' + row.SysNo + '"><i class="icon-trash"></i> 删除</button>';
+                                }, width: '50px', className: 'txt-center'
+                            },
+                    ],
+                    callback: function () { 
+                        SearchOperation();
+                    }
+                });
+                operationStatusDic = JSON.parse('@Html.Raw(JsonSerialize.ObjectToJson(statusValues))');
+
+                //搜索事件
+                $("#search_btn").click(function () {
+                    SearchOperation();
+                });
+
+                //添加操作
+                $("#btn_addoperation").click(function () {
+                    SelectOperation();
+                });
+
+                //删除操作
+                $("body").on("click", ".btn_delete_operation", function () {
+                    var sysNo = $(this).attr("sysno");
+                    DeleteOperation(sysNo);
+                });
+
+                //删除选中
+                $("#deleteselect_btn").click(function () {
+                    var checkedValues = GetDataTableCheckedValues("#operation_table");
+                    if (!checkedValues || checkedValues.length <= 0) {
+                        ErrorMsg("还没有选择要删除的信息");
+                        return;
+                    }
+                    var checkedValueString = checkedValues.join(",");
+                    DeleteOperation(checkedValueString);
+                });
+            })
+
+            //搜索操作
+            function SearchOperation() {
+                var data = {
+                    AuthorityFilter: { Codes: ['@ViewBag.AuthorityCode'] },
+                    OperationMateKey: $.trim($("#search_authname").val())
+                };
+                $.post('@Url.Action("AuthorityBindOperationSearch", "Sys")', data, function (res) {
+                    var jsonData = JSON.parse(res.Datas);
+                    ReplaceDataTableData("#operation_table", jsonData);
+                    $(window).resize();
+                    for (var d in jsonData) {
+                        var nowData = jsonData[d];
+                        nowOperationDatas[nowData.SysNo] = { Data: nowData, Status: 0 };
+                    }
+                    InitDataTableChecked("#operation_table");
+                });
+            }
+
+            //删除操作
+            function DeleteOperation(sysnos) {
+                if (!sysnos || sysnos == "") {
+                    return;
+                }
+                UnBindOperation(sysnos.split(','));
+            };
+
+            //选择操作
+            function SelectOperation() {
+                OpenDialogPage({
+                    url: '@Url.Action("AuthorityOperationMultiSelect", "Sys")',
+                    width: '600px',
+                    height:'400px',
+                    title: '选择授权操作'
+                });
+            }
+
+            //操作选中回调
+            function AuthorityOperationMultiSelectCallback(operationDatas) {
+                if (!operationDatas) {
+                    return;
+                }
+                var newOperationIds = new Array();
+                for (var a in operationDatas) {
+                    var opera = operationDatas[a];
+                    if (!opera) {
+                        continue;
+                    }
+                    var nowOperation = nowOperationDatas[opera.SysNo];
+                    if (nowOperation) {
+                        continue;
+                    }
+                    newOperationIds.push(opera.SysNo);
+                }
+                if (newOperationIds.length > 0) {
+                    BindOperation(newOperationIds);
+                }
+            }
+
+            //绑定操作
+            function BindOperation(operations) {
+                if (!operations || operations.length <= 0) {
+                    return;
+                }
+                var data = {
+                    authCode: '@ViewBag.AuthorityCode',
+                    operationIds: operations
+                };
+                $.post('@Url.Action("AuthorityBindOperation", "Sys")', data, function (res) {
+                    ResultMsg(res);
+                    if (res.Success) {
+                        SearchOperation();
+                    }
+                });
+            }
+
+            //解绑操作
+            function UnBindOperation(operations) {
+                if (!operations || operations.length <= 0) {
+                    return;
+                }
+                var data = {
+                    authCode: '@ViewBag.AuthorityCode',
+                    operationIds: operations
+                };
+                for (var o in operations) {
+                    nowOperationDatas[operations[o]] = null;
+                }
+                $.post('@Url.Action("AuthorityUnBindOperation", "Sys")', data, function (res) {
+                    ResultMsg(res);
+                    if (res.Success) {
+                        SearchOperation();
+                    }
+                });
+            }
+    </script>
+}

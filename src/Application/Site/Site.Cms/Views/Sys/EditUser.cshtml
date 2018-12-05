@@ -1,0 +1,213 @@
+
+@{
+    ViewBag.Title = "编辑用户";
+}
+@using MicBeach.Web.Utility;
+@using MicBeach.ViewModel.Sys.Request
+@using MicBeach.Util.Extension
+@using MicBeach.Application.Identity.User;
+@model EditAdminUserViewModel
+@{
+    List<EditRoleViewModel> roleList = Model?.Roles ?? new List<EditRoleViewModel>(0);
+    bool isAdd = Model == null || Model.SysNo <= 0;
+}
+
+<div id="page-body">
+    <div id="page-body-inner" class="pdt-10">
+        @using (Html.AjaxBeginForm("Edituser", "sys", new AjaxFormOptions() { HttpMethod = "Post", OnSuccess = "UserSuccessCallback", OnFailure = "UserFailedCallback" }, new { id = "formvalide"}))
+        {
+            @Html.Hidden("SysNo", null, new { id = "SysNo" })
+            <input type="hidden" name="userRoles" id="userRoles" />
+            @if (isAdd)
+            {
+                <div class="form-group">
+                    <label class="col-form-label">@Html.LabelFor(c => c.UserName)</label>
+                    <div class="d-inline-block w-200">
+                        @Html.TextBoxFor(a => a.UserName, new { @class = "form-control w-200" })
+                    </div>
+                    <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.UserName, "", new {@class= "form-validate-msg" })</div>
+                </div>
+            }
+            else
+            {
+                <div class="form-group">
+                    <label class="col-form-label">@Html.LabelFor(c => c.UserName)</label>
+                    <div class="d-inline-block w-200 lh-38">
+                        【@Model.UserName】
+                    </div>
+                </div>
+            }
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.RealName)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.RealName, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.RealName, "", new {@class= "form-validate-msg" })</div>
+            </div>
+            @if (isAdd)
+            {
+                <div class="form-group">
+                    <label class="col-form-label">@Html.LabelFor(c => c.Pwd)</label>
+                    <div class="d-inline-block w-200">
+                        @Html.PasswordFor(a => a.Pwd, new { @class = "form-control w-200" })
+                    </div>
+                    <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Pwd, "", new {@class= "form-validate-msg" })</div>
+                </div>
+            }
+            @if (!Model.SuperUser)
+            {
+                <div class="form-group">
+                    <label class="col-form-label">@Html.LabelFor(c => c.Status)</label>
+                    <div class="d-inline-block w-200">
+                        @Html.EnumToSelect(a => a.Status, UserStatus.正常, new { @class = "w-200 custom-select" }, selectedValue: Model?.Status)
+                    </div>
+                </div>
+            }
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.Mobile)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.Mobile, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Mobile, "", new {@class= "form-validate-msg" })</div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.Email)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.Email, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Email, "", new {@class= "form-validate-msg" })</div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.QQ)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.QQ, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.QQ, "", new {@class= "form-validate-msg" })</div>
+            </div>
+        }
+    </div>
+</div>
+<div id="page-foot">
+    <div class="page-foot-btngroup">
+        <button class="btn btn-primary" id="btn_submit"><i class="icon-save"></i> 提交</button>
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        //BodyScroll = false;
+        PositionListTable = false;
+        var userRoles = new Object();
+        var userDetailUrl = '@Url.Action("AdminUserDetail","Sys",new { id="_id"})';
+        $(function () {
+            $("#btn_submit").click(function () {
+                SubmitForm();
+            });
+
+            //初始化角色数据
+            $("#roletabe_page_list tr").each(function (i, e) {
+                var ele = $(e);
+                var removeBtn = ele.find('.btn_removerole');
+                var sysNo = $.trim(removeBtn.attr("sysno"));
+                if (sysNo == "") {
+                    return true;
+                }
+                userRoles[sysNo] = { Data: { SysNo: sysNo }, Ele: ele, IsNew: false, Status: true };
+            });
+
+            //选择角色
+            $("#btn_selectrole").click(function () {
+                DialogPage({
+                    url: '@Url.Action("RoleMultipleSelector","Sys")',
+                    width: "300px",
+                    height: "350px",
+                    title: '选择角色',
+                    ok: false,
+                    cancel: null
+                });
+            });
+
+            //移除角色
+            $("body").on("click", ".btn_removerole", function () {
+                RemoveRole($(this).attr("sysno"));
+            });
+
+            BindEnterEvent(SubmitForm);
+        });
+
+        //提交表单
+        function SubmitForm() {
+            InitRoleValue();
+            $("#formvalide").submit();
+        }
+
+        //角色选择回调
+        function RoleMultipleSelectCallback(roles, roleName) {
+            if (!roles) {
+                return;
+            }
+            $("#role_empty_tr").remove();
+            for (var r in roles) {
+                var roleData = roles[r];
+                var nowRole = userRoles[roleData.SysNo];
+                if (!nowRole) {
+                    var ele = $('<tr><td class="b_l_none">' + roleData.Name + '</td><td><button type="button" class="btn btn-xs btn-danger btn_removerole" sysno="' + roleData.SysNo + '"><i class="glyphicon glyphicon-trash"></i> 移除</button></td></tr>');
+                    nowRole = { Data: roleData, Ele: ele, IsNew: true, Status: true };
+                    userRoles[roleData.SysNo] = nowRole;
+                    $("#roletabe_page_list").append(ele);
+                } else if (nowRole.Status == 0) {
+                    nowRole.Status = 1;
+                    $("#roletabe_page_list").append(nowRole.Ele);
+                }
+            }
+        }
+
+        //成功回调
+        function UserSuccessCallback(res) {
+            if (!res) {
+                return;
+            }
+            res = JSON.parse(res);
+            ResultMsg(res);
+            if (res.Success) {
+                window.top.RedirectCurrentPage(userDetailUrl.replace('_id', res.Data.SysNo), '用户详情');
+            }
+        }
+
+        //失败回掉
+        function UserFailedCallback() {
+            ErrorMsg('提交失败');
+        }
+
+        //移除角色
+        function RemoveRole(roleId) {
+            if (!roleId) {
+                return;
+            }
+            var nowRole = userRoles[roleId];
+            if (!nowRole) {
+                return;
+            }
+            nowRole.Status = false;
+            userRoles[roleId] = nowRole;
+            nowRole.Ele.remove();
+        }
+
+        //初始化角色
+        function InitRoleValue() {
+            if (!userRoles) {
+                return;
+            }
+            var nowRoles = new Array();
+            for (var r in userRoles) {
+                var nowRole = userRoles[r];
+                if (!nowRole) {
+                    return;
+                }
+                if (nowRole.Status) {
+                    nowRoles.push(r);
+                }
+            }
+            $("#userRoles").val(nowRoles.join(','));
+        }
+    </script>
+}

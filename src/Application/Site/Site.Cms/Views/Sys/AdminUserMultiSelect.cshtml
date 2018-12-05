@@ -1,0 +1,268 @@
+
+@{
+    ViewBag.Title = "用户选择";
+}
+@using MicBeach.Util.Serialize;
+@using MicBeach.ViewModel.Sys.Filter;
+
+<environment>
+    <link href="~/style/css/table.css" rel="stylesheet" />
+</environment>
+<div id="page-body">
+    <div id="page-body-inner" class="content-panel">
+        <ul class="nav nav-tabs bd-tw-0 content-panel-head" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">用户列表</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">已选用户</a>
+            </li>
+        </ul>
+        <div class="tab-content content-panel-body" id="myTabContent">
+            <div class="tab-pane show active content-panel" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <div class="content-panel-head lis_search pd-10">
+                    <div class="form-group mg-0">
+                        <label class="col-form-label">姓名/登陆名</label>
+                        <input type="text" class="form-control" id="search_username" name="search_username">
+
+                        <label class="col-form-label">手机/邮箱</label>
+                        <input type="text" class="form-control" id="search_contact" name="search_contact">
+
+                        <button type="button" class="btn btn-info" id="search_btn"><i class="icon-search"></i> 搜索</button>
+                    </div>
+                </div>
+                <div class="content-panel-body">
+                    <table id="user_table" class="datagrid-table wp-100" cellspacing="0" cellpadding="0"></table>
+                </div>
+                <div class="content-panel-foot fs-12 pdt-10 pdb-10 bd-t-e6e6e6 pdl-10" id="tab_pager">
+                </div>
+            </div>
+            <div class="tab-pane content-panel" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                <div class="content-panel-head pd-10">
+                    <button class="btn btn-sm btn-danger" id="btn_cacheallselected"><i class="icon-remove"></i> 取消全部</button>
+                </div>
+                <div class="content-panel-body">
+                    <table id="selected_user_table" class="datagrid-table wp-100" cellspacing="0" cellpadding="0"></table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+@section Scripts
+    {
+    <environment>
+        <script src="~/scripts/table/jquery.dataTables.min.js"></script>
+        <script src="~/scripts/table/dataTables.fixedColumns.min.js"></script>
+    </environment>
+    <script type="text/javascript">
+        var SelectData = new Object();
+        var selectObjects = new Array();
+        var sysNos = '';
+        var allDatas = new Object();
+    var searchData = {};
+        $(function () {
+            //初始化数据表
+            var columnConfigs = new Array();
+            var selectColumnConfigs = new Array();
+            for (var i = 0; i < 4; i++) {
+                var tit = '';
+                var data = '';
+                var width = '';
+                var className = '';
+                var render;
+                switch (i) {
+                    case 0:
+                        tit = "姓名";
+                        data = "RealName";
+                        width = "100px";
+                        break;
+                    case 1:
+                        tit = "登录名";
+                        data = "UserName";
+                        width = "150px";
+                        break;
+                    case 2:
+                        tit = "手机";
+                        data = "Mobile";
+                        width = "150px";
+                        break;
+                    case 3:
+                        tit = "邮箱";
+                        data = "Email"
+                        break;
+                }
+                var configItem = { "title": tit, "targets": i, "data": data, "width": width, "className": className, 'render': render };
+                columnConfigs.push(configItem);
+                selectColumnConfigs.push(configItem)
+            }
+            columnConfigs.push({
+                "title": "操作", "targets": 4, "data": function (row, type, val, meta) {
+                    return '<button type="button" data-value="' + row.SysNo +'" class="btn btn-sm btn-success btn_select">选择</button>';
+                }, width: '50px', className: 'txt-center'
+            });
+            selectColumnConfigs.push({
+                "title": "操作", "targets": 4, "data": function (row, type, val, meta) {
+                    return '<button type="button" data-value="' + row.SysNo + '" class="btn btn-sm btn-danger btn_cancel">取消</button>';
+                }, width: '50px', className: 'txt-center'
+            });
+            InitDataTable({
+                TableEle: '#user_table',
+                "columnDefs": columnConfigs
+            });
+            InitDataTable({
+                TableEle: '#selected_user_table',
+                "columnDefs": selectColumnConfigs
+            });
+            InitSearchParameters();
+
+            setTimeout(function () {
+                Search();
+            },50);
+
+            //搜索事件
+            $("#search_btn").click(function () {
+                Search();
+            });
+
+            //选择数据
+            $("body").on("click", ".btn_select", function () {
+                var btn = $(this);
+                SelectValue(btn);
+            });
+
+            //取消选择
+            $("body").on("click", ".btn_cancel", function () {
+                var btn = $(this);
+                var sysNo = $.trim(btn.attr("data-value"));
+                DeleteSelectValue(sysNo);
+            });
+
+            //删除选择
+            $("body").on("click", ".btn_delete", function () {
+                var btn = $(this);
+                var sysNo = $.trim(btn.attr("data-value"));
+                DeleteSelectValue(sysNo);
+            });
+            //删除所有选中
+            $("#btn_cacheallselected").click(function () {
+                for (var s in SelectData) {
+                    DeleteSelectValue(s);
+                }
+            });
+
+            LayoutCallbackEvent = InitSelect;
+        })
+
+        //初始化查询参数
+        function InitSearchParameters() {
+            if (parent.GetExcludeRoles) {
+                var excludeRoles = parent.GetExcludeRoles();
+                searchData.WithoutRoles = excludeRoles;
+            }
+            if (parent.GetRoles) {
+                var roles = parent.GetRoles();
+                searchData.RoleIds = roles;
+            }
+        }
+
+        //搜索数据
+        function Search() {
+            var searchKey = $.trim($("#search_username").val());
+            var contactKey = $.trim($("#search_contact").val());
+            var data = { UserName: searchKey, ContactMateKey: contactKey };
+            if (searchData) {
+                if (searchData.RoleIds && searchData.RoleIds.length > 0) {
+                    data.RoleIds = searchData.RoleIds;
+                }
+                if (searchData.WithoutRoles && searchData.WithoutRoles.length > 0) {
+                    data.WithoutRoles = searchData.WithoutRoles;
+                }
+            }
+            PageSearch({
+                url: '@Url.Action("AdminUserMultiSelectSearch", "Sys")',
+                data: data,
+                listEle:'#user_table',
+                pagerEle: "#tab_pager",
+                selectPage: true,
+                callback: InitSelect
+            });
+        }
+
+        //返回选中的数据
+        function ConfirmSelect() {
+            DialogOpener().AdminUserMultiSelectCallback(selectObjects);
+            return true;
+        }
+
+        //选择数据
+        function SelectValue(btn) {
+            if (!btn || !allDatas) {
+                return;
+            }
+            var sysNo = $.trim(btn.attr("data-value"));
+            if (sysNo == "") {
+                return;
+            }
+            btn.removeClass("btn_select").removeClass("btn-success").addClass("btn_cancel").addClass("btn-danger").html("取消");
+            if (!SelectData[sysNo]) {
+                var nowProObj = allDatas[sysNo];
+                if (!nowProObj) {
+                    return;
+                }
+                AddDataTableData("#selected_user_table",[nowProObj]);
+                SelectData[sysNo] = true;
+                selectObjects.push(nowProObj);
+            }
+        }
+
+        //删除选择
+        function DeleteSelectValue(sysNo) {
+            if (!sysNo || sysNo == "") {
+                return;
+            }
+            if (!SelectData[sysNo]) {
+                return;
+            }
+            SelectData[sysNo] = false;
+            for (var d in selectObjects) {
+                if (selectObjects[d].SysNo == sysNo) {
+                    selectObjects.splice(d, 1);
+                    break;
+                }
+            }
+            var btn = $('.btn_cancel[data-value="' + sysNo + '"]');
+            if (btn.length > 0) {
+                btn.removeClass("btn_cancel").removeClass("btn-danger").addClass("btn_select").addClass("btn-success").html("选择");
+            }
+            ReplaceDataTableData("#selected_user_table",selectObjects);
+        }
+
+        //初始化信息
+        function InitSelect(datas) {
+            if (datas) {
+                for (var p in datas) {
+                    var data = datas[p];
+                    allDatas[data.SysNo] = data;
+                }
+            }
+            if (!SelectData) {
+                return;
+            }
+            for (var sysNo in SelectData) {
+                if (!SelectData[sysNo]) {
+                    continue;
+                }
+                $('.btn_select[data-value="' + sysNo + '"]').each(function(i,e){
+                    SelectValue($(e));
+                });
+            }
+        }
+
+        function ArtEvent() {
+            return ConfirmSelect();
+
+        }
+    </script>
+
+}

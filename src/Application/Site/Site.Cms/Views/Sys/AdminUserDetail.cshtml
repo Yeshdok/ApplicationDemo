@@ -1,0 +1,455 @@
+
+@{
+    ViewBag.Title = "用户详情";
+}
+@using MicBeach.ViewModel.Sys.Response
+@using MicBeach.Util.Extension
+@using MicBeach.Application.Identity.User;
+@using MicBeach.Util.Serialize;
+@model AdminUserViewModel
+@{
+    List<RoleViewModel> roleList = ViewBag.Roles;
+    string allAuthorityGroup = ViewBag.AllAuthorityGroup;
+    if (allAuthorityGroup.IsNullOrEmpty())
+    {
+        allAuthorityGroup = "[]";
+    }
+    string nodeString = ViewBag.AllAuthGroupNodes;
+    if (nodeString.IsNullOrEmpty())
+    {
+        nodeString = "[]";
+    }
+}
+<environment>
+    <link href="~/style/css/table.css" rel="stylesheet" />
+    <link href="~/scripts/ztree/skin.css" rel="stylesheet" />
+    <link href="~/style/css/jquery.splitter.css" rel="stylesheet" />
+</environment>
+<div id="page-body">
+    <div id="page-body-inner">
+        <div class="split-horizontal-container" data-position="20%" data-splitlimit="50,50">
+            <div class="split-horizontal-top">
+                <table cellpadding="0" cellspacing="0" class="detail-table">
+                    <tr>
+                        <td class="detail-td-tit">姓名</td>
+                        <td class="detail-td-content">@Model.RealName</td>
+                        <td class="detail-td-tit">登录名</td>
+                        <td class="detail-td-content">@Model.UserName</td>
+                        <td class="detail-td-tit">状态</td>
+                        <td class="detail-td-content">@Model.Status</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-td-tit">手机</td>
+                        <td class="detail-td-content">@Model.Mobile</td>
+                        <td class="detail-td-tit">邮箱</td>
+                        <td class="detail-td-content">@Model.Email</td>
+                        <td class="detail-td-tit">QQ</td>
+                        <td class="detail-td-content">@Model.QQ</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-td-tit">创建时间</td>
+                        <td class="detail-td-content" colspan="5">@Model.CreateDate.FormatToMinute()</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="split-horizontal-bottom">
+                <div class="content-panel">
+                    <ul class="nav nav-tabs bd-tw-0 content-panel-head" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">角色</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">授权</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content content-panel-body" id="myTabContent">
+                        <div class="tab-pane show active content-panel" id="home" role="tabpanel">
+                            <div class="content-panel-head pd-10">
+                                <button type="button" class="btn btn-primary" id="btn_select_role"><i class="icon-plus"></i> 选择角色</button>
+                                <button type="button" class="btn btn-danger" id="btn_removeselectrole"><i class="icon-trash"></i> 移除选中</button>
+                            </div>
+                            <div class="content-panel-body">
+                                <table class="datagrid-table wp-100" id="user_role_table" cellpadding="0" cellspacing="0"></table>
+                            </div>
+                        </div>
+                        <div class="tab-pane content-panel" id="profile" role="tabpanel">
+                            <div class="content-panel-body">
+                                <div class="split-vertical-container" data-position="200px" data-splitlimit="200,50">
+                                    <div class="split-vertical-left">
+                                        <ul id="AuthorityGroup_tree" class="ztree"></ul>
+                                    </div>
+                                    <div class="split-vertical-right">
+                                        <div class="content-panel">
+                                            <div class="content-panel-head">
+                                                <div class="lis_search pd-10 content-panel-head" id="auth_search">
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control w-200" id="search_authname" placeholder="权限名称/编码">
+                                                        <button class="btn btn-info" type="button" id="searchbusiness_btn" onclick="LoadAuthoritys()"><i class="icon-search"></i> 搜索</button>
+                                                        <button class="btn btn-success" onclick="SubmitAuthorize()"><i class="icon-save"></i> 保存授权修改</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="content-panel-body">
+                                                <table id="auth_table" class="datagrid-table wp-100" cellspacing="0" cellpadding="0"></table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="page-foot">
+    <div class="page-foot-btngroup">
+        <button class="btn btn-primary" id="btn_edit"><i class="icon-edit"></i> 编辑</button>
+        <button class="btn btn-primary" id="btn_modifypwd"><i class="icon-lock"></i> 修改密码</button>
+        @if (!Model.SuperUser)
+        {
+            switch (Model.Status)
+            {
+                case UserStatus.正常:
+                    <button class="btn btn-primary" id="btn_unenable"><i class="icon-eye-close"></i> 锁定</button>
+                    break;
+                case UserStatus.锁定:
+                    <button class="btn btn-primary" id="btn_enable"><i class="icon-eye-open"></i> 解锁</button>
+                    break;
+            }
+            <button class="btn btn-danger" id="btn_delete"><i class="icon-trash"></i> 删除</button>
+        }
+    </div>
+</div>
+
+@section Scripts{
+<environment>
+    <script src="~/scripts/table/jquery.dataTables.min.js"></script>
+    <script src="~/scripts/table/dataTables.fixedColumns.min.js"></script>
+    <script src="~/scripts/jq/jquery.splitter.js"></script>
+    <script src="~/scripts/ztree/jquery.ztree.all.js"></script>
+    <script src="~/scripts/ztree/jquery.ztree.exhide.js"></script>
+</environment>
+    <script type="text/javascript">
+        BodyScroll = false;
+        HasDivPageCon=true;
+        TabConentScroll=true;
+        var selectGroupId = null;
+        var loadingIcoUrl = '/Content/Scripts/ztree/img/loading.gif';
+        var seetings = {
+            view: {
+                nameIsHTML: true,
+            },
+            callback: {
+                onClick: AllAuthorityGroupNodeClick,
+                beforeExpand: BeforeExpand
+            }
+        };
+        var allNodes = @Html.Raw(nodeString);
+        var allAuthorityGroups = @Html.Raw(allAuthorityGroup);
+        var newSelectedAuthoritys=new Object();
+        var removeAuthoritys=new Object();
+        $(function () {
+            InitAllAuthorityGroupTree();
+
+            //角色列表
+            InitDataTable({
+                TableEle:'#user_role_table',
+                'columnDefs':[{ "title": '<div class="checkbox-style cbx_all"></div>', "targets": 0,"data":function ( row, type, val, meta ) {
+                    return '<div class="checkbox-style cbx_val" data-val="' + row.SysNo + '"></div>'; 
+                },width:'20px',className:'txt-center' },
+                { "title": "角色名", "targets": 1,"data":'Name' },
+                { "title": "操作", "targets": 2,"data":function(row,type,val,meta){
+                    return '<button type="button" class="btn btn-sm btn-danger btn_remove_role" sysno="'+row.SysNo+'"><i class="icon-trash"></i> 移除</button>';
+                },width:'62px',className:'txt-center' }
+                ],
+                callback: function () { 
+                    //添加角色数据
+                    AddDataTableData("#user_role_table",JSON.parse('@Html.Raw(JsonSerialize.ObjectToJson(roleList))'));
+                }
+            });
+
+            //授权列表
+            InitDataTable({
+                TableEle:'#auth_table',
+                'columnDefs':[{ "title": '<div class="checkbox-style cbx_all" id="auth_cbx_all"></div>', "targets": 0,"data":function ( row, type, val, meta ) {
+                    return '<div class="checkbox-style cbx_val auth_cbx_val ' + (row.AllowUse ? "checked" : "") + '" data-val="' + row.Code + '"></div>';
+                },width:'20px',className:'txt-center' },
+                { "title": "名称", "targets": 1,"data":'Name',width:'200px' },
+                { "title": "编码", "targets": 2,"data":"Code",width:'150px'},
+                { "title": "状态", "targets": 3, "data":"StatusString"}
+                ]
+            });
+
+            //编辑
+            $("#btn_edit").click(function () {
+                window.top.RedirectCurrentPage('@Url.Action("EditUser","Sys",new { sysno=Model.SysNo})', '编辑用户【@Model.UserName】');
+            });
+
+            //删除
+            $("#btn_delete").click(function () {
+                ConfirmMsg('确认删除用户吗?', function () {
+                    $.post('@Url.Action("DeleteUser","Sys")', { sysNos: '@Model.SysNo' }, function (res) {
+                        ResultMsg(res);
+                        if (res.Success) {
+                            window.top.CloseCurrentPage();
+                        }
+                    });
+                });
+
+            });
+            //修改密码
+            $("#btn_modifypwd").click(function () {
+                OpenDialogPage({
+                    width: '550px',
+                    height:'230px',
+                    title: '修改密码',
+                    url: '@Url.Action("AdminModifyPassword", "Sys",new { sysNo=Model.SysNo})'
+                });
+            });
+            //锁定
+            $("#btn_unenable").click(function () {
+                ModifyStatus('@Model.SysNo',@((int)UserStatus.锁定),'账户锁定后将不能登陆,确认锁定吗?');
+            });
+            //解锁
+            $("#btn_enable").click(function () {
+                ModifyStatus('@Model.SysNo',@((int)UserStatus.正常),'账户解锁后将恢复登陆,确认解锁吗?');
+            });
+
+            //选择授权
+            $("body").on("click", ".auth_cbx_val", function () {
+                var checked = $(this).hasClass('checked');
+                var sysNos = new Array();
+                var val = $.trim($(this).attr('data-val'));
+                if (val == '') {
+                    return;
+                }
+                sysNos.push(val);
+                if (checked) {
+                    SelectedAuthority(sysNos);
+                } else {
+                    RemoveAuthority(sysNos);
+                }
+            });
+            //授权权限
+            $("body").on("click", '#auth_cbx_all', function () {
+                var checked = $(this).hasClass('checked');
+                var sysNos = new Array();
+                $('.auth_cbx_val').each(function (i, e) {
+                    sysNos.push($(e).attr('data-val'));
+                });
+                if (checked) {
+                    SelectedAuthority(sysNos);
+                } else {
+                    RemoveAuthority(sysNos);
+                }
+            });
+            //移除角色
+            $("body").on('click','.btn_remove_role',function(){
+                var sysNo=$.trim($(this).attr("sysno"));
+                if(sysNo==""){
+                    return;
+                }
+                var sysNos=new Array();
+                sysNos.push(sysNo);
+                RemoveRole(sysNos)
+            });
+            //移除选定角色
+            $("#btn_removeselectrole").click(function(){
+                var roleIds=GetDataTableCheckedValues('#user_role_table');
+                RemoveRole(roleIds);
+            });
+            //选择角色
+            $("#btn_select_role").click(function(){
+                OpenDialogPage({
+                    url: '@Url.Action("RoleMultipleSelector","Sys")',
+                    width: '300px',
+                    height:'350px',
+                    title: '选择角色'
+                });
+            });
+
+        })
+
+        //修改用户状态
+        function ModifyStatus(id, status, msg) {
+            ConfirmMsg(msg, function () {
+                $.post('@Url.Action("ModifyUserStatus", "Sys")', { id: id,status:status }, function (res) {
+                    ResultMsg(res);
+                    window.top.RefreshCurrentPage();
+                });
+            });
+        }
+
+        //初始化所有权限分组树控件
+        function InitAllAuthorityGroupTree() {
+            $.fn.zTree.init($("#AuthorityGroup_tree"), seetings, allNodes);
+        }
+
+        //左侧权限分组节点选择
+        function AllAuthorityGroupNodeClick(event, treeId, treeNode) {
+            var nowAuthorityGroup = allAuthorityGroups[treeNode.id];
+            $.fn.zTree.getZTreeObj("AuthorityGroup_tree").selectNode(treeNode, false);
+            selectGroupId = treeNode.id;
+            LoadAuthoritys();
+        }
+
+        //加载权限数据
+        function LoadAuthoritys(){
+            if(!selectGroupId){
+                return;
+            }
+            var loadUrl='@Url.Action("LoadUserAuthorityByGroup", "Sys")';
+            $.post(loadUrl, { groupId: selectGroupId, key: $.trim($("#search_authname").val()), userId:'@Model.SysNo'},function(res){
+                ReplaceDataTableData("#auth_table",JSON.parse(res.Datas));
+                $(window).resize();
+                InitDataTableChecked("#auth_table");
+            });
+        }
+
+        //展开加载数据
+        function BeforeExpand(treeId, treeNode){
+            if(!treeNode||treeNode.loadData){
+                return true;
+            }
+            var zTree=$.fn.zTree.getZTreeObj(treeId);
+            treeNode.icon = loadingIcoUrl;
+            zTree.updateNode(treeNode);
+            $.post('@Url.Action("LoadChildAuthorityGroups","Sys")',{parentId:treeNode.id},function(res){
+                if(!res){
+                    return;
+                }
+                var childNodes=JSON.parse(res.ChildNodes);
+                zTree.addNodes(treeNode, -1, childNodes);
+                treeNode.loadData = true;
+                treeNode.icon = "";
+                zTree.updateNode(treeNode);
+                zTree.expandNode(treeNode,true);
+                var childAuthorityGroups=JSON.parse(res.AuthorityGroupData);
+                for(var c in childAuthorityGroups){
+                    allAuthorityGroups[c]=childAuthorityGroups[c];
+                }
+            });
+            return false;
+        }
+
+        //选择新的权限
+        function SelectedAuthority(authCodes){
+            if(!authCodes||authCodes.length<=0){
+                return;
+            }
+            for(var c in authCodes){
+                var code=authCodes[c];
+                if(newSelectedAuthoritys[code]){
+                    continue;
+                }
+                else if(removeAuthoritys[code]){
+                    removeAuthoritys[code]=null;
+                }
+                else{
+                    newSelectedAuthoritys[code]={Code:code,Status:1};
+                }
+            }
+        }
+
+        //移除权限
+        function RemoveAuthority(authCodes){
+            if(!authCodes||authCodes.length<=0){
+                return;
+            }
+            for(var c in authCodes){
+                var code=authCodes[c];
+                if(removeAuthoritys[code]){
+                    continue;
+                }else if(newSelectedAuthoritys[code]){
+                    newSelectedAuthoritys[code]=null;
+                }else{
+                    removeAuthoritys[code]={Code:code,Status:1};
+                }
+            }
+        }
+
+        //提交更改
+        function SubmitAuthorize(){
+            if(!newSelectedAuthoritys&&!removeAuthoritys){
+                SuccessMsg('修改成功');
+                return;
+            }
+            var newAuthorityCodes=new Array();//新增授权
+            var removeAuthorityCodes=new Array;//移除授权
+            if(newSelectedAuthoritys){
+                for(var a in newSelectedAuthoritys){
+                    if(!newSelectedAuthoritys[a]){
+                        continue;
+                    }
+                    newAuthorityCodes.push(a);
+                }
+            }
+            if(removeAuthoritys){
+                for(var r in removeAuthoritys){
+                    if(!removeAuthoritys[r]){
+                        continue;
+                    }
+                    removeAuthorityCodes.push(r);
+                }
+            }
+            if(newAuthorityCodes.length==0&&removeAuthorityCodes.length==0){
+                SuccessMsg('修改成功');
+                return;
+            }
+            $.post('@Url.Action("ModifyUserAuthority","Sys")',{userId:'@Model.SysNo',removeAuthCodes:removeAuthorityCodes,newAuthCodes:newAuthorityCodes},function(res)
+            {
+                if(res.Success){
+                    newSelectedAuthoritys=new Object();
+                    removeAuthoritys=new Object();
+                }
+                ResultMsg(res);
+            });
+        }
+
+        //选择权限
+        function CheckAuthChecked(){
+            var checkAll=true&&$("#auth_tabe_page_list tr td .table_cbox").length>0;
+            $("#auth_tabe_page_list tr td .table_cbox").each(function(i,e){
+                checkAll=checkAll&&e.checked;
+            });
+            $("#auth_table thead tr th .table_checkall")[0].checked=checkAll;
+        }
+
+        //移除角色用户绑定
+        function RemoveRole(roleIds){
+            if(!roleIds||roleIds.length<=0){
+                return;
+            }
+            ConfirmMsg('确认移除绑定角色吗?', function (res) {
+                $.post('@Url.Action("RemoveUserRole","Sys")', { userId: '@Model.SysNo', roleIds:roleIds}, function (res) {
+                    ResultMsg(res);
+                    if (res.Success) {
+                        window.top.RefreshCurrentPage();
+                    }
+                });
+            });
+        }
+
+        //角色选择回调
+        function RoleMultipleSelectCallback(roles, roleName) {
+            if (!roles||roles.length<=0) {
+                return;
+            }
+            var roleIds=new Array();
+            for (var r in roles) {
+                var roleData = roles[r];
+                roleIds.push(roleData.SysNo);
+            }
+            $.post('@Url.Action("BindUserRole","Sys")',{userId:'@Model.SysNo',roleIds:roleIds},function(res){
+                ResultMsg(res);
+                if (res.Success) {
+                    window.top.RefreshCurrentPage();
+                }
+            });
+        }
+    </script>
+}
+

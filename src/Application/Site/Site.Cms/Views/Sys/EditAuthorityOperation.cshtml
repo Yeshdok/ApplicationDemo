@@ -1,0 +1,99 @@
+@{
+    ViewBag.Title = "编辑授权操作";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using MicBeach.Util.Extension
+@using MicBeach.ViewModel.Sys.Request
+@using MicBeach.Application.Identity.Auth
+@model EditAuthorityOperationViewModel
+@{ 
+    var isAdd = (Model?.SysNo ?? 0) <= 0;
+    if (isAdd)
+    {
+        Model.Method = AuthorityOperationMethod.全部;
+        Model.AuthorizeType = AuthorityOperationAuthorizeType.权限授权;
+        Model.Status = AuthorityOperationStatus.启用;
+    }
+}
+<div id="page-body">
+    <div id="page-body-inner" class="pdt-10">
+        @using (Html.AjaxBeginForm("EditAuthorityOperation", "Sys", new AjaxFormOptions() { HttpMethod = "Post", OnSuccess = "SuccessCallback", OnFailure = "FailedCallback" }, new { id = "default-form" }))
+        {
+            @Html.HiddenFor(r => r.Group.SysNo)
+            @Html.HiddenFor(r => r.SysNo)
+            @if (Model.Group != null)
+            {
+                <div class="form-group">
+                    <label class="col-form-label">所属分组</label>
+                    <div class="d-inline-block w-200 lh-38">
+                        【@Model.Group.Name】
+                    </div>
+                </div>
+            }
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.Name)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.Name, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Name, "", new { @class = "form-validate-msg" })</div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.ControllerCode)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.ControllerCode, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.ControllerCode, "", new { @class = "form-validate-msg" })</div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.ActionCode)</label>
+                <div class="d-inline-block w-200">
+                    @Html.TextBoxFor(a => a.ActionCode, new { @class = "form-control w-200" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.ActionCode, "", new { @class = "form-validate-msg" })</div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.Method)</label>
+                <div class="d-inline-block lh-24">
+                    @Html.EnumToRadio(a => a.Method, AuthorityOperationMethod.全部, new { @class = "custom-control-input" },new { @class= "custom-control-label" },new { @class= "custom-control custom-radio custom-control-inline" }, checkedValue:Model?.Method)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.AuthorizeType)</label>
+                <div class="d-inline-block lh-24">
+                    @Html.EnumToRadio(a => a.AuthorizeType, AuthorityOperationAuthorizeType.无限制, new { @class = "custom-control-input" }, new { @class = "custom-control-label" }, new { @class = "custom-control custom-radio custom-control-inline" }, checkedValue: Model?.AuthorizeType)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.Status)</label>
+                <div class="d-inline-block lh-24">
+                    @Html.EnumToRadio(a => a.Status, AuthorityOperationStatus.启用, new { @class = "custom-control-input" }, new { @class = "custom-control-label" }, new { @class = "custom-control custom-radio custom-control-inline" }, checkedValue: Model?.Status)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label">@Html.LabelFor(c => c.Remark)</label>
+                <div class="d-inline-block">
+                    @Html.TextAreaFor(a => a.Remark, new { @class = "form-control w-200 h-50", autocomplete = "off" })
+                </div>
+                <div class="d-inline-block">@Html.DefaultValidationMessageFor(c => c.Remark, "", new { @class = "form-validate-msg" })</div>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        $(function () {
+            BindEnterEvent(SubmitForm);
+        });
+
+        //提交
+        function SubmitForm() {
+            $("#default-form").submit();
+        }
+
+        function ArtEvent() {
+            SubmitForm();
+            return false;
+        }
+
+    </script>
+}

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MicBeach.Develop" Version="1.0.7" />
+    <PackageReference Include="MicBeach.Util" Version="1.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Model\Entity\MicBeach.Entity.Sys\MicBeach.Entity.Sys.csproj" />
+    <ProjectReference Include="..\..\Model\Query\MicBeach.Query.Sys\MicBeach.Query.Sys.csproj" />
+    <ProjectReference Include="..\..\Contract\DataAccessContract\MicBeach.DataAccessContract.Sys\MicBeach.DataAccessContract.Sys.csproj" />
+    <ProjectReference Include="..\..\..\Logic\Business\Domain\MicBeach.Domain.Sys\MicBeach.Domain.Sys.csproj" />
+  </ItemGroup>
+
+</Project>

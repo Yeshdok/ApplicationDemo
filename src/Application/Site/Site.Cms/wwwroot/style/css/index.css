@@ -1,0 +1,434 @@
+body {
+  background: #007bff;
+  overflow: hidden;
+}
+#index-head {
+  height: 60px;
+  border-bottom-color: #1e9fff;
+}
+#index-menu {
+  overflow: hidden;
+  height: 100%;
+  position: relative;
+  z-index: 3;
+  box-shadow: 1px 0px 2px 0 rgba(0, 0, 0, 0.2);
+  transition: all .3s;
+  -webkit-transition: all .3s;
+  width: 100px;
+}
+#index-menu.FullShow {
+  transition: all .3s;
+  -webkit-transition: all .3s;
+  width: 250px;
+}
+#index-menu.close {
+  transition: all .3s;
+  -webkit-transition: all .3s;
+  width: 0px;
+}
+#index-menu #index-menu-first {
+  width: 100px;
+  float: left;
+  height: 100%;
+  background-color: #007bff;
+  position: relative;
+  z-index: 5;
+  border-right: 1px solid #1e9fff;
+}
+#index-menu #index-menu-first #menu-srolltop-btn {
+  background-color: #007bff;
+  width: 99px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 2;
+  border-top: 1px solid #fff;
+  border-top-color: rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+#index-menu #index-menu-first #menu-srolltop-btn:hover {
+  background-color: #0069d9;
+}
+#index-menu #index-menu-first #menu-srolltop-btn i {
+  width: 11px;
+  height: 8px;
+  display: inline-block;
+  color: #ffffff;
+}
+#index-menu #index-menu-first #menu-srolldown-btn {
+  background-color: #007bff;
+  width: 99px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  position: absolute;
+  left: 0;
+  bottom: 0px;
+  z-index: 2;
+  border-top: 1px solid #fff;
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+#index-menu #index-menu-first #menu-srolldown-btn:hover {
+  background-color: #0069d9;
+}
+#index-menu #index-menu-first #menu-srolldown-btn i {
+  width: 11px;
+  height: 8px;
+  display: inline-block;
+  color: #ffffff;
+}
+#index-menu #index-menu-first #menu-nav-con {
+  padding-top: 19px;
+  overflow: hidden;
+  height: 100%;
+}
+#index-menu #index-menu-first #menu-nav-con > ul {
+  display: block;
+  position: relative;
+  transition: all .3s;
+  -webkit-transition: all .3s;
+  top: 0px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li {
+  height: 70px;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  border-top: 1px solid #fff;
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mtopspace {
+  width: 100%;
+  height: 5px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico {
+  width: 36px;
+  height: 36px;
+  background: url(../images/navmpic.png) no-repeat;
+  margin: 0px auto;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.mymenus {
+  background-position: 0 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.sysmsg {
+  background-position: -36px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.member {
+  background-position: 0px -36px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.setting {
+  background-position: -72px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.showvideo {
+  background-position: -108px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.backage {
+  background-position: -144px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.infolist {
+  background-position: -180px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.home {
+  background-position: -216px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.each {
+  background-position: -252px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.money {
+  background-position: -286px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.home2 {
+  background-position: -322px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.erth {
+  background-position: -358px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.war {
+  background-position: -394px 0;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.time {
+  background-position: -36px -36px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.chart {
+  background-position: -72px -36px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.freight {
+  background-position: -108px -36px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.lilist {
+  background-position: -144px -36px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .mico.money2 {
+  background-position: -180px -36px;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .menuname {
+  color: #D8F0FE;
+  text-align: center;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li .menu-list {
+  display: none;
+  overflow: hidden;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li.active {
+  background-color: #0069d9;
+}
+#index-menu #index-menu-first #menu-nav-con > ul > li:hover {
+  background-color: #0069d9;
+}
+#index-menu #index-menu-second {
+  width: 100px;
+  height: 100%;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+#index-menu #index-menu-second.Show {
+  transition: all .3s;
+  -webkit-transition: all .3s;
+  padding-left: 100px;
+  width: 250px;
+}
+#index-menu #index-menu-second #index-menu-second-list {
+  font-size: 14px;
+  font-family: "Monospaced Number", "Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: rgba(0, 0, 0, 0.65);
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title {
+  padding: 0px 10px;
+  font-size: 12px;
+  height: 40px;
+  line-height: 40px;
+  cursor: pointer;
+  font-weight: bold;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title .menugroup-ico {
+  font-size: 14px;
+  margin-right: 4px;
+  color: rgba(0, 0, 0, 0.65);
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title .ui-accordion-header-icon {
+  font-size: 14px;
+  float: right;
+  color: rgba(0, 0, 0, 0.65);
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title.ui-state-active,
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title:hover {
+  color: #1E9FFF;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title.ui-state-active .menugroup-ico,
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title:hover .menugroup-ico {
+  color: #1E9FFF;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title.ui-state-active .ui-accordion-header-icon,
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-title:hover .ui-accordion-header-icon {
+  color: #1E9FFF;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-list ul li {
+  padding: 0px 10px;
+  height: 40px;
+  line-height: 40px;
+  padding-left: 28px;
+  font-size: 14px;
+  font-family: "Monospaced Number", "Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  cursor: pointer;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-list ul li:after {
+  content: ' ';
+  width: 2px;
+  height: 0px;
+  -webkit-transform: scaleY(0.0001);
+  -ms-transform: scaleY(0.0001);
+  transform: scaleY(0.0001);
+  opacity: 0;
+  -webkit-transition: opacity 0.15s cubic-bezier(0.215, 0.61, 0.355, 1), -webkit-transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+  transition: opacity 0.15s cubic-bezier(0.215, 0.61, 0.355, 1), -webkit-transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+  transition: transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+  transition: transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1), opacity 0.15s cubic-bezier(0.215, 0.61, 0.355, 1), -webkit-transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-list ul li:hover {
+  color: #1E9FFF;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-list ul li.active {
+  background-color: #e6f7ff;
+  color: #1E9FFF;
+  position: relative;
+}
+#index-menu #index-menu-second #index-menu-second-list .funcgroupmenu-list ul li.active:after {
+  width: 2px;
+  height: 100%;
+  background-color: #1E9FFF;
+  content: '';
+  position: absolute;
+  right: 0px;
+  content: "";
+  top: 0;
+  bottom: 0;
+  -webkit-transition: opacity 0.15s cubic-bezier(0.645, 0.045, 0.355, 1), -webkit-transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: opacity 0.15s cubic-bezier(0.645, 0.045, 0.355, 1), -webkit-transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.15s cubic-bezier(0.645, 0.045, 0.355, 1), -webkit-transform 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+  opacity: 1;
+  -webkit-transform: scaleY(1);
+  -ms-transform: scaleY(1);
+  transform: scaleY(1);
+}
+#index-content {
+  background: #fff;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: content-box;
+  position: relative;
+  z-index: 1;
+}
+.pagecontent-tabtitles {
+  right: 0;
+  z-index: 999;
+}
+.pagecontent-tabtitles {
+  transition: all .3s;
+  -webkit-transition: all 0.3s;
+}
+.pagecontent-tabtitles {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 120px 0 80px;
+  background-color: #fff;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+.pagecontent-tabtitles .pagetabs-btn {
+  position: absolute;
+  top: 0;
+  width: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .3s;
+  -webkit-transition: all .3s;
+  box-sizing: border-box;
+  border-left: 1px solid #f6f6f6;
+  line-height: 40px;
+  font-size: 16px;
+}
+.pagecontent-tabtitles .pagetabs-btn:hover {
+  background-color: #f6f6f6;
+}
+.pagecontent-tabtitles #btn_togglemenu {
+  left: 0px;
+  border-left: none;
+  border-right: 1px solid #f6f6f6;
+}
+.pagecontent-tabtitles #btn_prevtabitem {
+  left: 40px;
+  border-left: none;
+  border-right: 1px solid #f6f6f6;
+}
+.pagecontent-tabtitles #btn_nexttabitem {
+  right: 80px;
+}
+.pagecontent-tabtitles #tabpagetitle-refreshcurrentpage {
+  right: 40px;
+}
+.pagetabs-tab-container {
+  text-align: left!important;
+  overflow: hidden;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container {
+  position: relative;
+  left: 0;
+  height: 40px;
+  white-space: nowrap;
+  font-size: 0;
+  transition: all .2s;
+  -webkit-transition: all .2s;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container li {
+  display: inline-block;
+  font-size: 14px;
+  transition: all .2s;
+  -webkit-transition: all .2s;
+  position: relative;
+  padding: 0 15px;
+  text-align: center;
+  cursor: pointer;
+  min-width: 0;
+  line-height: 40px;
+  text-overflow: ellipsis;
+  padding-right: 30px;
+  overflow: hidden;
+  border-right: 1px solid #f6f6f6;
+  vertical-align: top;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container li .tab-close-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  margin: -7px 0 0;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  border-radius: 50%;
+  font-size: 12px;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container li .tab-close-btn:hover {
+  border-radius: 50%;
+  background-color: #FF5722;
+  color: #ffffff;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container li.current-tab,
+.pagetabs-tab-container #pagetabs-pageitem-container li:hover {
+  color: #000;
+  background: #f6f6f6;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container li.current-tab:after,
+.pagetabs-tab-container #pagetabs-pageitem-container li:hover:after {
+  width: 100%;
+  border: none;
+  height: 2px;
+  bottom: 0;
+  top: auto !important;
+  background-color: #1e9fff;
+}
+.pagetabs-tab-container #pagetabs-pageitem-container li:after {
+  content: '';
+  position: absolute;
+  bottom: 0 !important;
+  left: 0;
+  width: 0;
+  height: 2px;
+  border-radius: 0;
+  background-color: #1e9fff;
+  transition: all .2s;
+  -webkit-transition: all 0.2s;
+}
+#pagetabs-bodycontainer {
+  position: absolute;
+  z-index: 998;
+  width: auto;
+  box-sizing: border-box;
+  left: 0px;
+  top: 40px;
+  right: 0px;
+  bottom: 0px;
+  overflow: hidden;
+}
+#pagetabs-bodycontainer .page-item {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#pagetabs-bodycontainer .page-item iframe {
+  width: 100%;
+  height: 100%;
+}

@@ -1,0 +1,202 @@
+@{
+    ViewBag.Title = "操作权限";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using MicBeach.Util.Extension;
+@using MicBeach.Application.Identity.Auth;
+@using MicBeach.Util.Serialize;
+@{
+    var statusValues = AuthorityStatus.启用.GetType().GetEnumValueAndNames();
+}
+<environment>
+    <link href="~/style/css/table.css" rel="stylesheet" />
+</environment>
+<div id="page-body" class="content-panel">
+    <div class="content-panel-head">
+        <div class="row pd-10 mg-0">
+            <div class="column lis_search pd-0">
+                <input type="text" class="form-control w-200" id="search_authname" placeholder="权限名称/编码">
+                <button class="btn btn-info fc_3" type="button" id="searchbusiness_btn" onclick="SearchAuthority()"><i class="icon-search"></i></button>
+                <button class="btn btn-primary" id="btn_addauthority"><i class="icon-plus"></i> 添加权限</button>
+                <button class="btn btn-danger" id="deleteselect_btn"><i class="icon-trash"></i> 删除选中</button>
+            </div>
+        </div>
+    </div>
+    <div class="content-panel-body">
+        <table class="datagrid-table wp-100" id="auth_table" cellpadding="0" cellspacing="0"></table>
+    </div>
+</div>
+
+@section Scripts{
+    <environment>
+        <script src="~/scripts/table/jquery.dataTables.min.js"></script>
+        <script src="~/scripts/table/dataTables.fixedColumns.min.js"></script>
+    </environment>
+    <script type="text/javascript">
+        var nowAuthorityDatas = new Object();
+        var authStatusDic = new Object();
+        $(function () {
+
+            authStatusDic = JSON.parse('@Html.Raw(JsonSerialize.ObjectToJson(statusValues))');
+
+            //搜索事件
+            $("#search_btn").click(function () {
+                SearchAuthority();
+            });
+
+            //创建权限
+            $("#btn_addauthority").click(function () {
+                SelectAuthority();
+            });
+
+            //删除权限
+            $("body").on("click", ".btn_delete_auth", function () {
+                var sysNo = $(this).attr("sysno");
+                DeleteAuthority(sysNo);
+            });
+
+            //删除选中
+            $("#deleteselect_btn").click(function () {
+                var checkedValues = GetDataTableCheckedValues('#auth_table');
+                if (!checkedValues || checkedValues.length <= 0) {
+                    ErrorMsg("还没有选择要删除的信息");
+                    return;
+                }
+                var checkedValueString = checkedValues.join(",");
+                DeleteAuthority(checkedValueString);
+            });
+            //操作表格
+            InitDataTable({
+                TableEle: '#auth_table',
+                "columnDefs": [
+                        {
+                        "title": '<div class="checkbox-style cbx_all"></div>', "targets": 0, "data": function (row, type, val, meta) {
+                            return '<div class="checkbox-style cbx_val auth_cbx_val" data-val="' + row.Code + '"></div>';
+                            }, width: '20px', className: 'txt-center'
+                        },
+                        { "title": "编码", "targets": 1, "data": 'Code', width: '100px' },
+                        {
+                            "title": "名称", "targets": 2, "data": 'Name', width: '150px'
+                        },
+                        { "title": "分组", "targets": 3, "data": 'AuthGroup.Name' },
+                        {
+                            "title": "状态", "targets": 4, "data": 'Status', width: '50px', className: 'txt-center', render: function (data, type, row, meta) {
+                                return authStatusDic[data];
+                            }
+                        },
+                        {
+                            "title": "操作", "targets": 5, "data": function (row, type, val, meta) {
+                                return '<button type="button" class="btn btn-sm btn-danger btn_delete_auth" sysno="' + row.Code + '"><i class="icon-trash"></i> 删除</button>';
+                            }, width: '62px', className: 'txt-center'
+                        },
+                ],
+                callback: function () { 
+                    SearchAuthority();
+                }
+            });
+        })
+
+        //搜索权限
+        function SearchAuthority() {
+            var data = {
+                AuthorityOperationFilter: {
+                    SysNos: ['@ViewBag.OperationId']
+                },
+                NameCodeMateKey: $.trim($("#search_authname").val())
+            };
+            $.post('@Url.Action("AuthorityOperationBindAuthoritySearch", "Sys")', data, function (res) {
+                var jsonData = JSON.parse(res.Datas);
+                ReplaceDataTableData("#auth_table", jsonData);
+                $(window).resize();
+                if (jsonData.Data) {
+                    for (var d in jsonData.Data) {
+                        nowAuthorityDatas[d] = { Data: jsonData.Data[d], Status: 0 };
+                    }
+                }
+                InitDataTableChecked("#auth_table");
+            });
+        }
+
+        //删除权限
+        function DeleteAuthority(sysnos) {
+            if (!sysnos || sysnos == "") {
+                return;
+            }
+            UnBindAuthority(sysnos.split(','));
+        };
+
+        //选择权限
+        function SelectAuthority() {
+            OpenDialogPage({
+                url: '@Url.Action("AuthorityMultiSelect","Sys")',
+                width: "600px",
+                height: "400px",
+                title: '选择权限'
+            });
+        }
+
+        //权限选中回调
+        function AuthorityMultiSelectCallback(authDatas) {
+            if (!authDatas) {
+                return;
+            }
+            var newAuthCodes = new Array();
+            for (var a in authDatas) {
+                var auth = authDatas[a];
+                if (!auth) {
+                    continue;
+                }
+                var nowAuth = nowAuthorityDatas[auth.Code];
+                if (nowAuth) {
+                    continue;
+                }
+                newAuthCodes.push(auth.Code);
+            }
+            if (newAuthCodes.length > 0) {
+                BindAuthority(newAuthCodes);
+            }
+        }
+
+        //绑定权限
+        function BindAuthority(codes) {
+            if (!codes || codes.length <= 0) {
+                return;
+            }
+            var data = {
+                operationId: '@ViewBag.OperationId',
+                authCodes:codes
+            };
+            $.post('@Url.Action("OperationBindAuthority", "Sys")', data, function (res) {
+                ResultMsg(res);
+                if (res.Success) {
+                    SearchAuthority();
+                }
+            });
+        }
+
+        //解绑权限
+        function UnBindAuthority(codes) {
+            if (!codes || codes.length <= 0) {
+                return;
+            }
+            var data = {
+                operationId: '@ViewBag.OperationId',
+                authCodes: codes
+            };
+            for (var c in codes) {
+                nowAuthorityDatas[codes[c]] = null;
+            }
+            $.post('@Url.Action("OperationUnBindAuthority", "Sys")', data, function (res) {
+                ResultMsg(res);
+                if (res.Success) {
+                    SearchAuthority();
+                }
+            });
+        }
+
+        //关闭
+        function CloseWindow() {
+            art.dialog.close(true);
+        }
+    </script>
+}

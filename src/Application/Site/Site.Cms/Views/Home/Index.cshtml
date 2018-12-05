@@ -1,0 +1,118 @@
+
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>管理登陆</title>
+    <environment>
+        <link href="~/style/css/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+        <link href="~/style/css/bootstrap/css/customerbootstrap.css" rel="stylesheet" />
+        <link href="~/style/css/font-awesome.min.css" rel="stylesheet" />
+        <link href="~/scripts/imessage/message.css" rel="stylesheet" />
+        <link href="~/style/css/common.css" rel="stylesheet" />
+        <link href="~/style/css/skindefault.css" rel="stylesheet" />
+        <link href="~/style/css/index.css" rel="stylesheet" />
+    </environment>
+</head>
+<body>
+    <div id="index-head" class="container-fluid pd-0">
+        <div class="row mg-0">
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 d-sm-inline-block d-none"><div class="hp-100 lh-60 pdl-10" style="font-size:20px;color:#fff;">管理系统</div></div>
+            <div class="col-xl-4 col-lg-4 col-md-4 d-md-inline-block d-sm-none d-none"></div>
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-12 d-inline-block txt-right mgt-10">
+                <ul class="mgr-10">
+                    <li>
+                        <div class="dropdown show">
+                            <span class="btn dropdown-toggle bg-none bd-w-0 fs-14 clor-fff" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img src="~/style/images/1470937794269.jpg" class="w-30 h-30" style="border-radius: 50%;"><span class="mgl-5">管理员</span>
+                            </span>
+                            <div class="dropdown-menu left-12" aria-labelledby="dropdownMenuLink">
+                                <a class="dropdown-item" href="javascript:;" id="">修改密码</a>
+                                <a class="dropdown-item" href="#">安全退出</a>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="index-body">
+        <div id="index-menu" class="fl">
+            <div id="index-menu-first">
+                <div id="menu-srolltop-btn"><i class="icon-chevron-up"></i></div>
+                <div id="menu-nav-con">
+                    <ul>
+                        <li>
+                            <div class="mtopspace"></div>
+                            <div class="mico setting"></div>
+                            <div class="menuname">系统管理</div>
+                            <div class="menu-list">
+                                <h3 class="funcgroupmenu-title"><i class="menugroup-ico icon-user"></i> 角色/用户</h3>
+                                <div class="funcgroupmenu-list">
+                                    <ul>
+                                        <li action="@Url.Action("RoleList","Sys")">角色管理</li>
+                                        <li action="@Url.Action("AdminUserList","Sys")">管理账户</li>
+                                    </ul>
+                                </div>
+                                <h3 class="funcgroupmenu-title"><i class="menugroup-ico icon-cogs"></i> 权限/授权</h3>
+                                <div class="funcgroupmenu-list">
+                                    <ul>
+                                        <li action="@Url.Action("AuthorityGroupList", "Sys")">系统权限</li>
+                                        <li action="@Url.Action("AuthorityOperationGroupList", "Sys")">授权操作</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div id="menu-srolldown-btn"><i class="icon-chevron-down"></i></div>
+            </div>
+            <div id="index-menu-second">
+                <div id="index-menu-second-list">
+                </div>
+            </div>
+        </div>
+        <div id="index-content">
+            <div class="pagecontent-tabtitles">
+                <div class="pagetabs-btn micon micon-shrink-right" title="隐藏菜单" id="btn_togglemenu"></div>
+                <div class="pagetabs-btn micon micon-prev" id="btn_prevtabitem"></div>
+                <div class="pagetabs-btn micon micon-next" id="btn_nexttabitem"></div>
+                <div class="pagetabs-btn micon micon-refresh-3" id="tabpagetitle-refreshcurrentpage"></div>
+                <div class="dropdown show pagetabs-btn right-0">
+                    <span class="btn dropdown-toggle bg-none micon micon-down" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    </span>
+                    <div class="dropdown-menu lh-20" aria-labelledby="dropdownMenuLink">
+                        <a class="dropdown-item" href="javascript:void(0)" id="pagetabs-titleselect-closecurrent">关闭当前</a>
+                        <a class="dropdown-item" href="javascript:void(0)" id="pagetabs-titleselect-closeother">关闭其它</a>
+                        <a class="dropdown-item" href="javascript:void(0)" id="pagetabs-titleselect-closeall">关闭全部</a>
+                    </div>
+                </div>
+
+                <div class="pagetabs-tab-container">
+                    <ul id="pagetabs-pageitem-container"></ul>
+                </div>
+            </div>
+            <div id="pagetabs-bodycontainer">
+            </div>
+        </div>
+    </div>
+    <environment>
+        <script src="~/scripts/jq/jquery.min.js"></script>
+        <script src="~/scripts/bootstrap/popper.min.js"></script>
+        <script src="~/scripts/bootstrap/bootstrap.min.js"></script>
+        <script src="~/scripts/jq/jquery-ui.min.js"></script>
+        <script src="~/scripts/jq/jquery.mousewheel.min.js"></script>
+        <script src="~/scripts/dialog/artDialog.js"></script>
+        <script src="~/scripts/dialog/iframeTools.js"></script>
+        <script src="~/scripts/imessage/message.min.js"></script>
+        <script src="~/scripts/tool.js"></script>
+        <script src="~/scripts/tabcontentpage.js"></script>
+        <script src="~/scripts/index.js"></script>
+    </environment>
+</body>
+</html>

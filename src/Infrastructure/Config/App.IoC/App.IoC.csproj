@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MicBeach.Serialize.Json.JsonNet" Version="1.0.1" />
+    <PackageReference Include="MicBeach.Util" Version="1.0.11" />
+    <PackageReference Include="MicBeach.Web" Version="1.0.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Contract\BusinessContract\MicBeach.BusinessContract.Sys\MicBeach.BusinessContract.Sys.csproj" />
+    <ProjectReference Include="..\..\Contract\DataAccessContract\MicBeach.DataAccessContract.Sys\MicBeach.DataAccessContract.Sys.csproj" />
+    <ProjectReference Include="..\..\DataAccess\MicBeach.DataAccess.Sys\MicBeach.DataAccess.Sys.csproj" />
+    <ProjectReference Include="..\..\Repository\MicBeach.Repository.Sys\MicBeach.Repository.Sys.csproj" />
+    <ProjectReference Include="..\..\..\Logic\Business\Implement\MicBeach.Business.Sys\MicBeach.Business.Sys.csproj" />
+    <ProjectReference Include="..\..\..\Logic\Business\Domain\MicBeach.Domain.Sys\MicBeach.Domain.Sys.csproj" />
+    <ProjectReference Include="..\..\..\Logic\Service\MicBeach.Service.Sys\MicBeach.Service.Sys.csproj" />
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="build.bat" />
+  </Target>
+
+</Project>

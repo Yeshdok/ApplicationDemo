@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 信息管理系统</title>
+
+    <environment>
+        <link href="~/style/css/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+        <link href="~/style/css/bootstrap/css/customerbootstrap.css" rel="stylesheet" />
+        <link href="~/style/css/font-awesome.min.css" rel="stylesheet" />
+        <link href="~/scripts/imessage/message.css" rel="stylesheet" />
+        <link href="~/style/css/ctreeselect.css" rel="stylesheet" />
+        <link href="~/style/css/common.css" rel="stylesheet" />
+        <link href="~/style/css/skindefault.css" rel="stylesheet" />
+        <link href="~/style/css/main.css" rel="stylesheet" />
+    </environment>
+</head>
+<body>
+
+    @RenderBody()
+
+    <environment>
+        <script src="~/scripts/jq/jquery.min.js"></script>
+        <script src="~/scripts/moment.js"></script>
+        <script src="~/scripts/jq/jquery-ui.min.js"></script>
+        <script src="~/scripts/jq/jquery.validate.js"></script>
+        <script src="~/scripts/jq/jquery.validate.unobtrusive.js"></script>
+        <script src="~/scripts/jq/jquery.unobtrusive-ajax.js"></script>
+        <script src="~/scripts/dialog/artDialog.js"></script>
+        <script src="~/scripts/dialog/iframeTools.js"></script>
+        <script src="~/scripts/bootstrap/popper.min.js"></script>
+        <script src="~/scripts/bootstrap/bootstrap.min.js"></script>
+        <script src="~/scripts/imessage/message.min.js"></script>
+        <script src="~/scripts/tool.js"></script>
+        <script src="~/scripts/main.js"></script>
+    </environment>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
